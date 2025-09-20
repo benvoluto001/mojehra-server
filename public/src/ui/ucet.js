@@ -1,87 +1,53 @@
-// src/ui/ucet.js
-import { getCurrentUser, listUsers, register, login, logout } from '../auth.js';
-import { load } from '../state.js';
+// public/src/ui/ucet.js
+import { state, save } from '../state.js';
 
-const fmt = (x)=> String(x||'').replace(/</g,'&lt;');
+function ensureStats(){
+  if (!state.stats) state.stats = {};
+  if (!state.stats.spent) state.stats.spent = {};
+  if (typeof state.stats.nickname !== 'string') state.stats.nickname = 'host';
+}
+function totalSpent(){
+  const s = state?.stats?.spent || {};
+  return Object.values(s).reduce((a,b)=>a + Number(b||0), 0);
+}
 
 export function renderUcet(){
+  ensureStats();
   const page = document.getElementById('page-ucet');
   if (!page) return;
 
-  const curr = getCurrentUser();
-  const users = listUsers();
+  const points = totalSpent();
 
   page.innerHTML = `
     <section class="card">
       <h2>Účet</h2>
-      <div class="row" style="gap:12px; flex-wrap:wrap;">
-        <div class="pill">Přihlášen: <b id="acc-name">${fmt(curr)||'—'}</b></div>
-        <button class="btn" id="btn-logout" ${curr?'':'disabled'}>Odhlásit</button>
-      </div>
-    </section>
 
-    <section class="card">
-      <h3>Přihlášení</h3>
-      <div class="row" style="gap:8px; align-items:end; flex-wrap:wrap;">
-        <label>Uživatel<br>
-          <select id="login-user" style="min-width:180px;">
-            ${users.map(u=>`<option value="${fmt(u)}"${u===curr?' selected':''}>${fmt(u)}</option>`).join('') || '<option value="">(žádní uživatelé)</option>'}
-          </select>
+      <div class="row" style="gap:12px;align-items:end;flex-wrap:wrap;">
+        <label>Jméno hráče
+          <input id="nick" type="text" value="${state.stats.nickname||'host'}" maxlength="24"/>
         </label>
-        <label>Heslo<br>
-          <input type="password" id="login-pass" placeholder="••••••" style="min-width:180px;">
-        </label>
-        <button class="btn" id="btn-login" ${users.length? '':'disabled'}>Přihlásit</button>
+        <div class="mini">Body (vše utracené suroviny): <b>${points.toLocaleString('cs-CZ')}</b></div>
       </div>
-    </section>
 
-    <section class="card">
-      <h3>Registrace</h3>
-      <div class="row" style="gap:8px; align-items:end; flex-wrap:wrap;">
-        <label>Uživatel<br>
-          <input type="text" id="reg-user" placeholder="Nový uživatel" style="min-width:180px;">
-        </label>
-        <label>Heslo<br>
-          <input type="password" id="reg-pass" placeholder="Heslo" style="min-width:180px;">
-        </label>
-        <label>Heslo znovu<br>
-          <input type="password" id="reg-pass2" placeholder="Heslo znovu" style="min-width:180px;">
-        </label>
-        <button class="btn" id="btn-register">Registrovat</button>
+      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button id="btn-save" class="btn">Uložit jméno</button>
+
+        <!-- Odhlášení a přepnutí účtu přes přímé odkazy -->
+        <a class="btn btn-secondary" href="/logout">Odhlásit</a>
+        <a class="btn btn-secondary" href="/logout">Přihlásit jiný účet</a>
+
+        <!-- Viditelné vstupy na /login a /register (když nechceš jen odhlásit) -->
+        <a class="btn" href="/login">Přejít na přihlášení</a>
+        <a class="btn" href="/register">Vytvořit nový účet</a>
       </div>
-      <div class="mini muted" style="margin-top:6px;">Každý účet má vlastní uloženou hru.</div>
     </section>
   `;
 
-  page.querySelector('#btn-login')?.addEventListener('click', async ()=>{
-    try{
-      const u = page.querySelector('#login-user')?.value;
-      const p = page.querySelector('#login-pass')?.value;
-      await login(u, p);
-      await load();
-      alert('Přihlášeno.');
-      renderUcet();
-      window.dispatchEvent(new CustomEvent('auth-changed'));
-    }catch(e){ alert(e.message||String(e)); }
-  });
-
-  page.querySelector('#btn-register')?.addEventListener('click', async ()=>{
-    try{
-      const u = page.querySelector('#reg-user')?.value;
-      const p1 = page.querySelector('#reg-pass')?.value;
-      const p2 = page.querySelector('#reg-pass2')?.value;
-      if (p1 !== p2) throw new Error('Hesla se neshodují.');
-      await register(u, p1);
-      await load();
-      alert('Účet vytvořen a přihlášen.');
-      renderUcet();
-      window.dispatchEvent(new CustomEvent('auth-changed'));
-    }catch(e){ alert(e.message||String(e)); }
-  });
-
-  page.querySelector('#btn-logout')?.addEventListener('click', ()=>{
-    logout();
-    alert('Odhlášeno.');
-    renderUcet();
+  const nick = page.querySelector('#nick');
+  page.querySelector('#btn-save')?.addEventListener('click', ()=>{
+    state.stats.nickname = (nick.value||'').trim() || 'host';
+    save?.();
+    const el = document.getElementById('account-label');
+    if (el) el.textContent = state.stats.nickname;
   });
 }

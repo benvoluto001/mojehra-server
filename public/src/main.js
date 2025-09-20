@@ -175,7 +175,7 @@ function mountApp(){
     if (name === 'pisari')   renderPisari();
     if (name === 'postava')  renderPostava?.();
     
-    if (page === 'zebricek')  renderZebricek();
+    if (name === 'zebricek')  renderZebricek();
 
  
     if (name === 'predmety') renderStroje();

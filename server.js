@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1); // důležité pro Render/Heroku – umožní poslat secure cookie přes proxy
 
 // ====== KONFIG (ENV s fallbacky) ======
 const ADMIN_USER = (process.env.ADMIN_USER ?? 'hrac').toString().trim();
@@ -25,10 +26,12 @@ app.use(session({
   secret: SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
+    cookie: {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
+    secure: true // na Renderu jedeš přes HTTPS, takže vždy true
+  }
+
   }
 }));
 
@@ -65,6 +68,7 @@ app.post('/login', (req,res)=>{
   console.log('[LOGIN FAIL]', { userTry: u, passLen: p.length });
   return res.status(401).send('Špatné jméno nebo heslo. <a href="/login">Zpět</a>');
 });
+app.get('/__whoami', (req,res)=> res.json({ user: req.session.user || null }));
 
 app.post('/logout', (req,res)=>{
   req.session.destroy(()=> res.redirect('/login'));
@@ -87,3 +91,4 @@ app.get('*', (req,res)=>{
 
 const port = process.env.PORT || 8080;
 app.listen(port, ()=> console.log('Listening on http://localhost:'+port));
+

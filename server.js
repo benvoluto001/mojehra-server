@@ -1,4 +1,4 @@
-// server.js (kořen projektu)
+// server.js (kořen repa)
 import express from 'express';
 import session from 'express-session';
 import path from 'path';
@@ -9,9 +9,9 @@ const __dirname  = path.dirname(__filename);
 
 const app = express();
 
-// Jednoduché přihlašovací údaje (změníš podle sebe nebo dáš do env proměnných)
-const ADMIN_USER = process.env.ADMIN_USER || 'hrac';
-const ADMIN_PASS = process.env.ADMIN_PASS || 'heslo123';
+// Přihlašovací údaje z ENV nebo fallback (hrac/heslo123)
+const ADMIN_USER = (process.env.ADMIN_USER || 'hrac').trim();
+const ADMIN_PASS = (process.env.ADMIN_PASS || 'heslo123').trim();
 const SECRET     = process.env.SESSION_SECRET || 'dev-secret-change-me';
 
 app.use(express.urlencoded({ extended: true }));
@@ -44,12 +44,15 @@ app.get('/login', (req,res)=>{
   `);
 });
 
+// OŘEZÁNÍ MEZER + porovnání s ENV/fallback
 app.post('/login', (req,res)=>{
-  const { u, p } = req.body || {};
+  const u = (req.body?.u || '').trim();
+  const p = (req.body?.p || '').trim();
   if (u === ADMIN_USER && p === ADMIN_PASS){
     req.session.user = u;
     return res.redirect('/');
   }
+  console.log('[LOGIN FAIL]', { userTry: u, passLen: p.length });
   res.status(401).send('Špatné jméno nebo heslo. <a href="/login">Zpět</a>');
 });
 
@@ -57,17 +60,17 @@ app.post('/logout', (req,res)=>{
   req.session.destroy(()=> res.redirect('/login'));
 });
 
-// Gate – všechno kromě /login bude vyžadovat přihlášení
+// Gate – vše mimo /login vyžaduje přihlášení
 app.use((req,res,next)=>{
   if (req.path.startsWith('/login')) return next();
   if (req.session.user) return next();
   return res.redirect('/login');
 });
 
-// Statické soubory (tvoje hra)
+// Statická hra
 app.use(express.static(path.join(__dirname,'public')));
 
-// SPA fallback – ať hash router funguje
+// SPA fallback
 app.get('*', (req,res)=>{
   res.sendFile(path.join(__dirname,'public','index.html'));
 });

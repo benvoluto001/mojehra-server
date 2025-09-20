@@ -81,10 +81,24 @@ app.use(express.static(path.join(__dirname,'public')));
 // Pomocná kontrola session (můžeš pak smazat)
 app.get('/__whoami', (req,res)=> res.json({ user: req.session.user ?? null }));
 
-// SPA fallback
-app.get('*', (req,res)=>{
-  res.sendFile(path.join(__dirname,'public','index.html'));
+// SPA fallback – jen pro HTML navigace (bez přípony)
+// aby chybějící .js/.css vracely 404 a bylo to vidět v konzoli
+app.get('*', (req, res, next) => {
+  if (req.method !== 'GET') return next();
+
+  const accept = req.headers.accept || '';
+  const hasExt = path.extname(req.path) !== '';
+
+  // pokud jde o "stránku" (bez přípony) → vrať index.html
+  if (accept.includes('text/html') && !hasExt) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
+  // jinak nech request propadnout dál (status 404)
+  return res.status(404).end();
 });
+
 
 const port = process.env.PORT || 8080;
 app.listen(port, ()=> console.log('Listening on http://localhost:'+port));
+

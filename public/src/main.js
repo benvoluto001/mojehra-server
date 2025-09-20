@@ -13,6 +13,9 @@ import { renderUcet } from './ui/ucet.js';
 
 import { state } from './state.js';
 import { getCurrentUser, ensureGuestIfNone, onAuthChanged } from './auth.js';
+import { renderZebricek } from './ui/zebricek.js';
+
+
 
 import { Pila } from './buildings/Pila.js';
 import { Kamenolom } from './buildings/Kamenolom.js';
@@ -171,6 +174,10 @@ function mountApp(){
     if (name === 'vypravy')  renderVypravy();
     if (name === 'pisari')   renderPisari();
     if (name === 'postava')  renderPostava?.();
+    
+    if (page === 'zebricek')  renderZebricek();
+
+ 
     if (name === 'predmety') renderStroje();
     if (name === 'obrana')   renderObrana();
     if (name === 'ucet')     renderUcet();

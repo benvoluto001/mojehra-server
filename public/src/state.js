@@ -249,21 +249,36 @@ export function applyOfflineResearch(seconds){
   applyResearchEffects?.();
 }
 
-export function addResource(key, amount){
-  const cur = state.resources[key] || 0;
-  if (!USE_CAP){
-    state.resources[key] = Math.max(0, cur + amount);
-    return;
+// NAHRAĎ celou funkci addResource touto verzí
+export function addResource(key, delta = 0){
+  if (!state.resources) state.resources = {};
+  if (!state.stats) state.stats = {};
+  if (!state.stats.spent) state.stats.spent = {};
+  if (typeof state.stats.nickname !== 'string') state.stats.nickname = 'host';
+
+  const current = Number(state.resources[key] || 0);
+  const next = current + Number(delta || 0);
+  state.resources[key] = Math.max(0, next);
+
+  // pokud odebíráme (utrácíme), započti do statistiky
+  if (Number(delta) < 0){
+    const spent = state.stats.spent;
+    const add = Math.abs(Number(delta));
+    spent[key] = Number(spent[key] || 0) + add;
   }
-  const baseCap  = state.capacity[key] ?? Infinity;
-const capBonus = Number(state?.effects?.capacity || 0); // např. +0.05 = +5 %
-const cap = Number.isFinite(baseCap)
-  ? Math.round(baseCap * Math.max(0, 1 + capBonus))
-  : Infinity;
-
-state.resources[key] = Math.max(0, Math.min(cur + amount, cap));
-
 }
+// VLOŽ POD addResource
+export function totalSpentPoints(){
+  const s = state?.stats?.spent || {};
+  return Object.values(s).reduce((a,b)=>a + Number(b||0), 0);
+}
+
+export function ensureStats(){
+  if (!state.stats) state.stats = {};
+  if (!state.stats.spent) state.stats.spent = {};
+  if (typeof state.stats.nickname !== 'string') state.stats.nickname = 'host';
+}
+
 
 export function canPay(cost){
   return Object.entries(cost).every(([k, v]) => (state.resources[k] || 0) >= v);

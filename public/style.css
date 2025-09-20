@@ -1,0 +1,1475 @@
+/* === ZÁKLADNÍ STYL CELÉ STRÁNKY === */
+:root {
+  --bg: #0f1117;          /* celkové pozadí */
+  --card: #2c3244;        /* karty (budovy, sekce) */
+  --text: #f1f1f1;        /* základní text */
+  --muted: #9ca3af;       /* tlumený text */
+  --accent: #1d4ed8;      /* hlavní zvýraznění (modrá) */
+  --accent2: #3b82f6;
+  --sidebar-w: 200px;     /* šířka panelu vlevo */
+  --sidebar-gap: 20px;    /* mezera od levého okraje */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
+  padding-left: calc(var(--sidebar-w) + var(--sidebar-gap) * 2); /* posun obsahu doprava */
+}
+
+h1, h2, h3 {
+  margin: 0 0 12px;
+  font-weight: bold;
+}
+
+/* === KONTEJNERY === */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.card {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.foot {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+/* === PANEL SUROVIN === */
+#resources {
+  position: fixed;
+  top: 100px;
+  left: var(--sidebar-gap);
+  width: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.resource {
+  width: 100%;
+  background: #2b1d0e;        /* tmavě hnědé pozadí */
+  border: 1px solid #3e2a16;
+  padding: 10px 14px;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: bold;
+  color: #f8f5e1;             /* slonová kost */
+}
+
+/* === BUDOVY === */
+.building {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.level {
+  background: #1f2937;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+/* === TLAČÍTKA === */
+.btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+.btn:hover:not(:disabled) {
+  background: var(--accent2);
+}
+.btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+/* === PROGRESS BAR === */
+.progress {
+  width: 100%;
+  height: 12px;
+  background: rgba(157, 206, 118, 0.984);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress {
+  width: 100%;
+  height: 12px;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress .bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff0000, #eeff00, #22c55e); 
+  /* modrá → světlejší modrá → zelená */
+  background-size: 100% 100%; 
+  background-repeat: no-repeat;
+  transition: width .25s ease;
+}
+
+
+/* === MOBILNÍ VERZE === */
+@media (max-width: 900px) {
+  #resources {
+    position: static;
+    width: auto;
+    flex-direction: row;
+  }
+  body {
+    padding-left: 16px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* === Statistiky === */
+/* === Statistiky === */
+#stats { 
+  margin-top: 14px;
+}
+
+.stats-title {
+  margin: 6px 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stat-header, .stat-row {
+  display: grid;
+  grid-template-columns: 120px 80px 80px 100px 100px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+}
+
+.stat-header {
+  font-weight: bold;
+  background: rgba(255, 0, 0, 0.08);
+  border-radius: 8px 8px 0 0;
+}
+
+.stat-row {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-row:last-child {
+  border-radius: 0 0 8px 8px;
+  border-bottom: none;
+}
+
+.stat-name {
+  font-weight: 600;
+}
+
+.stat-num {
+  text-align: left;
+}
+.stat-header, .stat-row {
+  display: grid;
+  grid-template-columns: 120px 80px 80px 100px 100px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+}
+
+.stat-header {
+  font-weight: bold;
+  background: rgba(253, 0, 0, 0.08);
+  border-radius: 8px 8px 0 0;
+}
+
+.stat-row {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-row:last-child {
+  border-radius: 0 0 8px 8px;
+  border-bottom: none;
+}
+
+.stat-name { font-weight: 600; }
+.stat-num  { text-align: left; }
+/* ====== kapacita – když je plno, zbarvi do „pozoru“ ====== */
+.resource.full{
+  background: #402018;          /* o něco červenější hnědá */
+  border-color: #a84d3b;
+  box-shadow: 0 0 0 2px rgba(168,77,59,.25) inset;
+}
+/* --- suroviny jako tlačítka --- */
+.resource { cursor: pointer; user-select: none; }
+.resource:hover { filter: brightness(1.05); }
+.resource.active {
+  outline: 2px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.35) inset;
+}
+
+/* --- panel detailu --- */
+#detail .detail {
+  min-height: 240px;
+}
+.detail h3 { margin: 6px 0 10px; }
+.detail .mini { color: var(--muted); font-size: .9em; }
+
+.detail .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detail .tbl { width: 100%; border-collapse: collapse; font-size: .95em; }
+.detail .tbl th,
+.detail .tbl td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; }
+.detail .tbl th { background: rgba(255,255,255,.06); }
+.detail .tbl tr:nth-child(even) td { background: rgba(255,255,255,.035); }
+/* ==== HORNÍ MENU ==== */
+.header{
+  position: sticky;      /* zůstává přilepené nahoře */
+  top: 0;
+  z-index: 2000;
+  padding: 14px 20px 10px;
+  background: rgba(15,17,23,.72); /* lehce průhledné */
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header h1{
+  margin: 0;
+  font-size: 32px;
+}
+
+.topnav{
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.topnav a{
+  color: var(--text);
+  text-decoration: none;
+  padding: 6px 5px;
+  border-radius: 10px;
+  font-weight: 400;
+  transition: color .15s, background .15s, transform .1s;
+}
+.topnav a:hover{
+  font-weight: 500;
+  color: #8bbdf6;
+  text-shadow: 0 0 8px rgba(59,130,246,.9), 0 0 50px rgba(59,130,246,.45);
+  background: rgba(34, 3, 145, 0.615);
+  transform: translateY(-1px);
+  color: #8bbdf6;           /* jemně zesvětli text */
+  transform: translateY(-1px);          /* jemně zesvětli text */
+ 
+}
+
+/* Výpravy – tučně a „svítí“ */
+.topnav a.cta{
+  font-weight: 800;
+  color: #93c5fd; /* světle modrá */
+  text-shadow: 0 0 8px rgba(59,130,246,.9), 0 0 14px rgba(59,130,246,.45);
+  background: rgba(0, 98, 255, 0.12);
+  border: 1px solid rgba(195, 201, 211, 0.25);
+}
+.topnav a.cta:hover{
+  background: rgba(91, 153, 254, 0.464);
+}
+
+/* Forum – žlutě a tučně */
+.topnav a.forum{
+  font-weight: 800;
+  color: #FFD700;             /* žlutá */
+  
+  
+}
+.topnav a.forum:hover{
+  background: rgba(250, 204, 21, .16);
+}
+
+/* pro malé displeje se menu zalomí na dva řádky */
+@media (max-width: 800px){
+  .header{ padding: 12px 16px; }
+  .header h1{ font-size: 26px; }
+  .topnav{ gap: 10px; }
+}
+/* Stránky (hash router) */
+.page { display: none; }
+.page.active { display: block; }
+
+/* zvýrazni položku v horním menu, která je aktivní */
+.topnav a.active{
+  background: rgba(255,255,255,.08);
+  border-radius: 10px;
+}
+/* ===== POSTAVA / INVENTÁŘ ===== */
+.char-wrap{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+/* ===== POSTAVA / ATTRIBY – vertikálně pod sebou ===== */
+.attrs .attr-row{
+  display: flex;
+  flex-direction: column;   /* ⬅︎ stacked nad sebou */
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  text-align: center;
+}
+
+.attrs .attr-row span:first-child{
+  font-weight: 700;         /* název atributu */
+}
+
+.attrs .attr-row span:last-child{
+  font-variant-numeric: tabular-nums; /* stejné šířky číslic = klidnější vzhled */
+  opacity: .95;
+}
+.attrs .attr-row span:last-child{
+  font-size: 18px;
+  letter-spacing: .3px;
+}
+
+.inv-grid{
+  display: grid;
+  grid-template-columns: repeat(10, 64px);  /* 10 sloupců */
+  grid-auto-rows: 64px;                      /* 5 řádků → 50 buněk */
+  gap: 8px;
+}
+.equip-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 120px);
+  grid-auto-rows: 64px;
+  gap: 10px;
+}
+.slot{
+  background: rgba(255,255,255,.04);
+  border: 1px dashed rgba(255,255,255,.15);
+  border-radius: 10px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px;
+  cursor: pointer;
+}
+.slot b{ color: #e5e7eb; font-weight: 700; }
+.slot:hover{
+  border-color: rgba(59,130,246,.6);
+  box-shadow: 0 0 0 2px rgba(59,130,246,.25) inset;
+}
+/* ===== Layout karty Postava: vlevo vybavení+inventář, vpravo atributy ===== */
+.char-layout{
+  display: grid;
+  grid-template-columns: 1fr 240px;   /* pravý sloupec s atributy */
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.char-left{
+  min-height: 320px; /* místo pro inventář (ten červený blok z tvého obrázku) */
+}
+
+.mini-title{
+  font-size: 14px;
+  letter-spacing: .3px;
+  color: var(--muted);
+  margin: 6px 0 8px;
+}
+
+/* pravý sloupec (oddělovací linka) */
+.char-attrs{
+  border-left: 1px solid rgba(255,255,255,.12);
+  padding-left: 16px;
+}
+
+/* Atributy – „název“ nad „hodnotou“ */
+.attrs .attr-row{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  text-align: center;
+}
+.attrs .attr-row span:first-child{ font-weight: 700; }
+.attrs .attr-row span:last-child{
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+}
+
+/* Vybavení (zůstává stejné, jen pro jistotu) */
+.equip-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 120px);
+  grid-auto-rows: 64px;
+  gap: 10px;
+}
+
+/* Inventář – aby se vešel do bloku pod vybavením */
+.char-left .inv-grid{
+  display: grid;
+  grid-template-columns: repeat(10, 56px);  /* 10 sloupců */
+  grid-auto-rows: 56px;                      /* 5 řádků → 50 buněk */
+  gap: 6px;
+}
+
+/* Responzivita: užší obrazovky – atributy pod sebe */
+@media (max-width: 1100px){
+  .char-layout{
+    grid-template-columns: 1fr; /* vše do jednoho sloupce */
+  }
+  .char-attrs{
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+  .char-left .inv-grid{ grid-template-columns: repeat(8, 52px); }
+}
+@media (max-width: 700px){
+  .char-left .inv-grid{ grid-template-columns: repeat(5, 48px); }
+}
+
+/* aby text uvnitř .card tlačítka nebyl černý */
+button.card{
+  color: var(--text);          /* stejné jako zbytek stránky */
+  background: var(--card);     /* jistota vzhledu */
+  border: none;                 /* bez default rámečku tlačítka */
+}
+
+/* zesvětli text v „Lvl“ pilulce */
+.level{
+  color: #e7ff2f;              /* světle šedá */
+  background: #000000;         /* už máš – jen pro kontext */
+}
+/* ===== VOJSKO / JEDNOTKY ===== */
+.badges { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.badge  { display:inline-block; padding:3px 8px; border-radius:999px; font-size:.85em; }
+.badge.dim { background: rgba(255,255,255,.08); color: var(--text); }
+.type-azurova   { background:#2563eb; color:#fff; }
+.type-purpurova { background:#7c3aed; color:#fff; }
+.type-smaragdova{ background:#059669; color:#fff; }
+.type-karminova { background:#dc2626; color:#fff; }
+.unit-stats { display:flex; gap:10px; flex-wrap:wrap; margin:6px 0; }
+.unit-stats .stat { background:rgba(255,255,255,.06); padding:4px 8px; border-radius:8px; }
+.unit-grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); }
+.unit-cost li { margin-left:18px; }
+
+/* ===== SOUBOJ / SIMULÁTOR ===== */
+.sim-grid{ display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+.sim-card h3{ margin: 0 0 8px; }
+.sim-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+.sim-row label{ display:flex; align-items:center; gap:6px; }
+.tbl-sim{ width:100%; border-collapse: collapse; font-size:.95em; }
+.tbl-sim th,.tbl-sim td{ border:1px solid rgba(255,255,255,.12); padding:6px 8px; text-align:center; }
+.tbl-sim input{ width:72px; text-align:right; }
+.log{ background: rgba(255,255,255,.05); border-radius:8px; padding:8px; max-height:240px; overflow:auto; font-size:.95em; }
+.mini-title{ font-size:.95em; font-weight:700; margin:8px 0 4px; }
+
+
+/* === Výzkumy: zvýraznění upgradovatelných dlaždic === */
+.research-card{
+  position: relative;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  transition: box-shadow .25s ease, transform .1s ease, border-color .25s ease;
+}
+.research-card.upgradable{
+  border-color: rgba(255,215,0,.75);
+  box-shadow:
+    0 0 10px 2px rgba(255,215,0,.35),
+    0 0 26px 6px rgba(255,184,0,.20),
+    inset 0 0 0 1px rgba(255,215,0,.25);
+ animation: glowPulse 1.6s ease-in-out infinite alternate;
+}
+@keyframes glowPulse{
+  from{ box-shadow:
+      0 0 8px  2px rgba(255,215,0,.28),
+      0 0 18px 4px rgba(255,184,0,.16),
+      inset 0 0 0 1px rgba(255,215,0,.22); }
+  to{   box-shadow:
+      0 0 16px 3px rgba(255,215,0,.45),
+      0 0 34px 8px rgba(255,184,0,.28),
+      inset 0 0 0 1px rgba(255,215,0,.30); }
+}
+
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0f1218;color:#e6eaf2}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 24px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{background:#1b2230;color:#cdd5e1;border:1px solid #2a3347;border-radius:999px;padding:6px 12px;cursor:pointer}
+.tabs button.active{background:#2d3a55;color:#fff;box-shadow:0 0 0 2px #4c6fff22 inset}
+main{max-width:900px;margin:24px auto;padding:0 16px}
+.panel{display:none}
+.panel.show{display:block}
+.card{background:#1b2230;border:1px solid #2a3347;border-radius:12px;padding:16px;margin:12px 0}
+.row{display:flex;gap:12px;align-items:center;margin:8px 0}
+.row input{flex:1;background:#151a24;border:1px solid #2a3347;border-radius:8px;padding:8px;color:#e6eaf2}
+.actions{display:flex;gap:8px;justify-content:flex-start;margin-top:12px}
+.actions button{background:#2d3a55;color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.actions button[type="reset"]{background:#39445e}
+#result{min-height:40px}
+/* ===== Stránka Budovy – layout přes třídu (router-friendly) ===== */
+#page-budovy.budovy-layout.active{
+  display: grid;                 /* ukáže se jen, když má .active */
+ grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+/* ===== Dlaždice budovy – nelze postavit ===== */
+.card.locked{
+  outline: 2px solid rgba(220, 38, 38, .85);                 /* červený rámeček */
+  box-shadow:
+    0 0 10px 2px rgba(220, 38, 38, .35),
+    0 0 24px 8px rgba(220, 38, 38, .18),
+    inset 0 0 0 1px rgba(220, 38, 38, .25);
+}
+.card.locked:hover{
+  box-shadow:
+    0 0 12px 3px rgba(220, 38, 38, .45),
+    0 0 30px 10px rgba(220, 38, 38, .24),
+    inset 0 0 0 1px rgba(220, 38, 38, .30);
+}
+/* ===== Budovy: pozadí dlaždice + grayscale pro "nelze postavit" ===== */
+.card {
+  position: relative;           /* kvůli absolutnímu bg */
+  overflow: hidden;             /* zaoblené rohy i pro bg */
+}
+
+.card .tile-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: .95;
+  border-radius: inherit;
+  /* lehký tmavý overlay kvůli čitelnosti textu */
+  background-image: linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+}
+
+.card .tile-content {
+  position: relative;           /* nad pozadím */
+  z-index: 1;
+}
+
+/* když je "locked", obrázek (jen pozadí) bude šedý */
+.card.locked .tile-bg {
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+}
+/* Dlaždice budovy s vnitřním pozadím */
+.card{ position:relative; overflow:hidden; }
+.card .tile-bg{
+  position:absolute; inset:0;
+  background-size:cover; background-position:center;
+  border-radius:inherit;
+  /* jemné stmavení pro čitelnost */
+  background-image:linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+  opacity:.95;
+}
+.card .tile-content{ position:relative; z-index:1; }
+
+/* Nelze postavit (třída .locked z JS) → obrázek zšedne */
+.card.locked .tile-bg{ filter:grayscale(100%) contrast(.9) brightness(.85); }
+
+/* Vybraná karta – zlatavý lem (sluší sepii) */
+.card.selected{ outline:2px solid rgba(205,181,125,.9); box-shadow:0 0 8px rgba(205,181,125,.6); }
+/* menší písmo v detailu budovy */
+#detail-box {
+  font-size: 12px;   /* základ (výchozí bývá ~16px) */
+  line-height: 1.4;
+}
+
+#detail-box h3 {
+  font-size: 10px;   /* nadpis budovy – ať je jen o trochu větší */
+  margin-bottom: 6px;
+}
+
+#detail-box h4 {
+  font-size: 10px;   /* podnadpisy menší */
+  margin-top: 10px;
+}
+/* === tabulky v detailu === */
+.tbl{ width:100%; border-collapse:collapse; table-layout:fixed; }
+.tbl thead th{ opacity:.75; font-weight:600; }
+.tbl th,.tbl td{ padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.07); }
+.tbl th:first-child,.tbl td:first-child{ text-align:left; }
+.tbl th:not(:first-child),.tbl td:not(:first-child){ text-align:right; }
+.tbl-compact th,.tbl-compact td{ padding:4px 6px; font-size:13px; }
+.num{ white-space:nowrap; font-variant-numeric:tabular-nums; } /* stejné šířky číslic */
+:root{
+  --bg-deep: #1f1a16;       /* světlejší hnědo-šedá */
+  --bg-deep-2:#26201a;
+  --sand-900:#2a241f;
+  --sand-800:#332a23;
+  --sand-700:#3e342a;
+  --sand-600:#4b3d31;
+  --sand-500:#5a493a;
+  --clay:    #8b6245;       /* světlejší hlína */
+  --gold:    #e7c97f;       /* světlejší zlato */
+  --gold-2:  #d9b96d;
+  --lapis:   #3f6fe0;
+  --lapis-2: #5b86ed;
+  --alien:   #4fffe6;       /* jasnější neon */
+  --alien-2: #1be9cf;
+  --text:    #f5efe6;       /* světlejší text */
+  --text-dim:#e0d6c4;
+  --muted:   rgba(245,239,230,.7);
+  --border:  rgba(255,240,200,.18);
+}
+
+/* světlejší pozadí s jemným gradientem */
+body {
+  background: 
+    url("./ui/obrazky/prd.png") no-repeat center center fixed,
+    radial-gradient(1200px 600px at 20% -10%, rgba(79,255,230,.08), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%, rgba(91,134,237,.08), transparent 55%),
+    linear-gradient(180deg, var(--bg-deep), var(--bg-deep-2));
+  background-size: cover;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+}
+
+
+
+/* karty – světlejší hliněný podklad */
+.card{
+  background: linear-gradient(180deg, rgba(255,240,200,.05), rgba(255,230,180,.02)),
+              var(--sand-700);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
+  color:var(--text);
+}
+
+/* pravý panel */
+#detail-box{
+  font-size:14px; line-height:1.5;
+  background: linear-gradient(180deg, rgba(231,201,127,.08), rgba(231,201,127,.04)),
+              var(--sand-600);
+  border:1px solid var(--border);
+}
+
+/* resource pilulky – světlejší odstín */
+.resource{
+  background: linear-gradient(180deg, rgba(139,98,69,.4), rgba(139,98,69,.2));
+  border:1px solid rgba(231,201,127,.25);
+}
+.resource.full{
+  background: linear-gradient(180deg, rgba(190,64,46,.45), rgba(190,64,46,.25));
+  border-color: rgba(255,140,100,.4);
+}
+
+/* tlačítka – jasnější */
+.btn{
+  background: linear-gradient(180deg, var(--lapis-2), var(--lapis));
+  color:#fff; border:1px solid rgba(255,255,255,.12);
+  box-shadow: 0 6px 14px rgba(91,134,237,.35);
+}
+.btn:hover{ filter:brightness(1.1); }
+.budovy-layout #buildings .card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 19px;
+  /* původně tam byl filter, ten pryč */
+}
+
+.budovy-layout #buildings .card img {
+  display:block;
+  width:100%;
+  height:auto;
+  filter: brightness(1.1) saturate(1.15) contrast(1.05);
+}
+/* Pozadí celé hry s obrázkem */
+html, body { min-height: 100%; }
+body{
+  /* nejdřív poloprůhledné gradienty (nahoře), poslední vrstva je obrázek (dole) */
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(79,255,230,.08), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%, rgba(91,134,237,.08), transparent 55%),
+    linear-gradient(180deg, var(--bg-deep), var(--bg-deep-2)),
+    url("src/ui/obrazky/background.png") no-repeat center center fixed;
+  background-size: auto, auto, auto, cover; /* poslední (obrázek) přes celou plochu */
+}
+/* === POZADÍ – vynucený obrázek přes celou plochu (přebije starší pravidla) === */
+html, body { min-height: 100%; }
+body{
+  background: url("src/ui/obrazky/background.png") center/cover fixed no-repeat !important;
+}
+
+/* (volitelné) jemné ztmavení pro čitelnost – průhledný overlay nad obrázkem */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(79,255,230,.06), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%,  rgba(91,134,237,.06), transparent 55%),
+    linear-gradient(180deg, rgba(31,26,22,.35), rgba(38,32,26,.35));
+}
+/* — Výzkumy: mřížka karet jako u Budov — */
+#page-vyzkumy { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+@media (max-width: 1100px){
+  #page-vyzkumy { grid-template-columns: 1fr; }
+}
+
+/* mřížka čtvercových karet */
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px,1fr));
+  gap: 12px;
+}
+@media (max-width: 1200px){
+  #research-grid{ grid-template-columns: repeat(2, minmax(220px,1fr)); }
+}
+@media (max-width: 720px){
+  #research-grid{ grid-template-columns: 1fr; }
+}
+
+/* karta výzkumu bez obrázku (jednotné pozadí) */
+.research-card{
+  position: relative;
+  min-height: 160px;
+  background:
+    linear-gradient(180deg, rgba(30,30,35,.14), rgba(30,30,35,.10)),
+    linear-gradient(180deg, rgba(40,40,45,.18), rgba(40,40,45,.10));
+  display: flex;
+  text-align: left;
+  align-items: stretch;
+}
+.research-card .tile-content{ width:100%; display:flex; flex-direction:column; }
+.research-card .level{ background:rgba(255,255,255,.12); color:#ffd86b; font-weight:700; }
+.research-card.selected{ outline:2px solid rgba(205,181,125,.9); box-shadow:0 0 8px rgba(205,181,125,.6); }
+
+#research-detail.card{ min-height: 340px; }
+#research-detail h3{ font-size:18px; margin-bottom:6px; }
+#research-detail h4{ font-size:14px; margin-top:12px; }
+/* Fix: čtvercové karty výzkumů – žádné roztahování řádků */
+#research-grid .research-card{
+  aspect-ratio: 1 / 1;   /* čtverec jako u budov */
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#research-grid .research-card .tile-content{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#research-grid .research-card:focus{ outline: none; }
+#research-grid .research-card.selected{
+  outline: 2px solid rgba(205,181,125,.9);
+  box-shadow: 0 0 8px rgba(205,181,125,.6);
+}
+/* === VÝZKUMY – stabilní layout: 2 sloupce + pravý detail === */
+#page-vyzkumy{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px; /* vlevo mřížka, vpravo detail */
+  gap: 16px;
+}
+
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr)); /* vždy 2 sloupce */
+  grid-auto-rows: 200px;   /* pevná výška řádku = žádné nafukování */
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* karta výzkumu */
+#research-grid .research-card{
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+#research-grid .research-card .tile-content{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px !important; /* přebije inline padding z JS */
+}
+
+/* popis – omezit na 3 řádky */
+#research-grid .research-card .tile-content .muted{
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* vybraná karta */
+#research-grid .research-card:focus{ outline: none; }
+#research-grid .research-card.selected{
+  outline: 2px solid rgba(205,181,125,.9);
+  box-shadow: 0 0 8px rgba(205,181,125,.6);
+}
+
+/* mobil – 1 sloupec, detail pod mřížkou */
+@media (max-width: 900px){
+  #page-vyzkumy{ grid-template-columns: 1fr; }
+  #research-grid{ grid-template-columns: 1fr; grid-auto-rows: 210px; }
+}
+/* Výzkumy – menší mezery a nižší karty (2 sloupce) */
+#research-grid{
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 8px;                 /* menší mezera mezi kartami */
+  grid-auto-rows: 160px;    /* nižší řádek (bylo ~200px) */
+}
+
+#research-grid .research-card{
+  height: 100%;
+  min-height: 0;
+}
+
+#research-grid .research-card .tile-content{
+  padding: 10px !important; /* menší vnitřní odsazení */
+}
+
+/* popisek na kartě max na 2 řádky + menší písmo */
+#research-grid .research-card .tile-content .muted{
+  -webkit-line-clamp: 2;
+  font-size: 12px;
+}
+/* === VÝZKUMY: mřížka vlevo + pravý detail (2 sloupce) === */
+#page-vyzkumy{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px; /* vlevo seznam, vpravo detail */
+  gap: 16px;
+}
+
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr)); /* vždy 2 sloupce */
+  gap: 12px;
+}
+
+/* karta výzkumu se stejným stylem jako budova (pozadí + overlay) */
+.research-card{
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* obrázek na pozadí čtverce + jemný tmavý závoj kvůli textu */
+.research-card .tile-bg{
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  border-radius: inherit;
+  filter: saturate(1.05) contrast(1.05);
+}
+.research-card .tile-bg::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+  pointer-events: none;
+}
+
+/* obsah karty nad obrázkem */
+.research-card .tile-content{
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* vybraná karta */
+.research-card.selected{
+  outline: 2px solid rgba(205,181,125,.9);
+  box-shadow: 0 0 8px rgba(205,181,125,.6);
+}
+
+/* mobil: 1 sloupec, detail pod mřížkou */
+@media (max-width: 900px){
+  #page-vyzkumy{ grid-template-columns: 1fr; }
+  #research-grid{ grid-template-columns: 1fr; }
+}
+/* === VÝZKUMY – layout: vlevo mřížka (2 sloupce), vpravo detail === */
+#page-vyzkumy{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px; /* mřížka | detail */
+  gap: 16px;
+}
+
+/* mřížka karet výzkumů – vždy 2 sloupce, stejně široké, řádek pevné výšky */
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  grid-auto-rows: 200px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* karta výzkumu = dlaždice jako budova (obrázek v pozadí + obsah nad tím) */
+.research-card{ position:relative; overflow:hidden; border-radius:18px; }
+.research-card .tile-bg{
+  position:absolute; inset:0;
+  background-size:cover; background-position:center;
+  border-radius:inherit;
+  filter:saturate(1.05) contrast(1.05);
+}
+.research-card .tile-bg::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+  pointer-events:none;
+}
+.research-card .tile-content{
+  position:relative; z-index:1;
+  height:100%; display:flex; flex-direction:column;
+  padding:12px;
+}
+.research-card .level{
+  align-self:flex-start;
+  font-weight:700; color:#ffd86b;
+  background:rgba(255,255,255,.12);
+  padding:2px 6px; border-radius:8px; margin-bottom:6px;
+}
+
+/* vybraná karta (viz budovy) */
+.research-card:focus{ outline:none; }
+.research-card.selected{
+  outline:2px solid rgba(205,181,125,.9);
+  box-shadow:0 0 8px rgba(205,181,125,.6);
+}
+
+/* mobil: 1 sloupec a detail pod mřížkou */
+@media (max-width: 900px){
+  #page-vyzkumy{ grid-template-columns: 1fr; }
+  #research-grid{ grid-template-columns: 1fr; grid-auto-rows: 210px; }
+}
+/* VÝZKUMY – layout: vlevo mřížka (2 sloupce), vpravo detail */
+#page-vyzkumy{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px;
+  gap: 16px;
+}
+
+/* mřížka výzkumů – vždy 2 sloupce, stabilní výška řádku */
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  grid-auto-rows: 190px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+/* karta výzkumu – stejné chování jako u budov; obrázek je v .tile-bg */
+.research-card{ position:relative; overflow:hidden; border-radius:18px; }
+.research-card .tile-content{ position:relative; z-index:1; height:100%; padding:12px; display:flex; flex-direction:column; }
+.research-card.selected{ outline:2px solid rgba(205,181,125,.9); box-shadow:0 0 8px rgba(205,181,125,.6); }
+
+/* pokud už v CSS máš .card .tile-bg z Budov, tohle nepotřebuješ; jinak přidej: */
+.research-card .tile-bg{
+  position:absolute; inset:0;
+  background-size:cover; background-position:center;
+  border-radius:inherit;
+}
+.research-card .tile-bg::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+  pointer-events:none;
+}
+
+/* mobil */
+@media (max-width: 900px){
+  #page-vyzkumy{ grid-template-columns: 1fr; }
+  #research-grid{ grid-template-columns: 1fr; grid-auto-rows: 210px; }
+}
+/* Výzkumy – vzhled zamknuté karty (stejně jako u budov) */
+.research-card.locked .tile-bg{
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+}
+.research-card.locked{
+  outline: 2px solid rgba(255,60,60,.85);
+  box-shadow: 0 0 12px rgba(255,60,60,.35);
+}
+/* Výzkumy – zamknutá karta (šedá + červený glow) */
+.research-card.locked .tile-bg{
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+}
+.research-card.locked{
+  outline: 2px solid rgba(255,60,60,.85);
+  box-shadow: 0 0 12px rgba(255,60,60,.35);
+}
+/* === VÝZKUMY: layout a vzhled karet jako u Budov === */
+#page-vyzkumy{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px; /* vlevo mřížka, vpravo detail */
+  gap: 16px;
+}
+#research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr)); /* vždy 2 sloupce */
+  grid-auto-rows: 200px;  /* pevná výška řádku */
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* karta výzkumu = stejné chování jako u budov (obrázek + overlay + obsah) */
+.research-card{ position:relative; overflow:hidden; border-radius:18px; }
+.research-card .tile-bg{
+  position:absolute; inset:0; background-size:cover; background-position:center; border-radius:inherit;
+  filter:saturate(1.05) contrast(1.05);
+}
+.research-card .tile-bg::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55));
+  pointer-events:none;
+}
+.research-card .tile-content{
+  position:relative; z-index:1; height:100%;
+  padding:12px; display:flex; flex-direction:column; justify-content:space-between;
+}
+
+/* vybraná = zlatý lem */
+.research-card.selected{
+  outline:2px solid rgba(205,181,125,.9);
+  box-shadow:0 0 8px rgba(205,181,125,.6);
+}
+
+/* nejde spustit = šedá + červený glow (jako budovy) */
+.research-card.locked .tile-bg{
+  filter:grayscale(100%) contrast(.9) brightness(.85);
+}
+.research-card.locked{
+  outline:2px solid rgba(255,60,60,.85);
+  box-shadow:0 0 12px rgba(255,60,60,.35);
+}
+
+/* mobil */
+@media (max-width: 900px){
+  #page-vyzkumy{ grid-template-columns: 1fr; }
+  #research-grid{ grid-template-columns: 1fr; grid-auto-rows: 210px; }
+}
+/* Výzkumy – stejný „pískový / sepia“ vzhled jako u budov */
+#research-grid .research-card{
+  background: none;                 /* žádná tmavá výplň, jen obrázek jako u budov */
+  border-radius: 12px;
+}
+
+/* obrázek + teplý sepia filtr jako u Pily */
+#research-grid .research-card .tile-bg{
+  filter: sepia(0.5) saturate(1.2) contrast(1.05) brightness(.95);
+}
+
+/* teplý závoj (vignette) přes obrázek – stejné ladění jako budovy */
+#research-grid .research-card .tile-bg::after{
+  background:
+    radial-gradient(115% 85% at 50% 12%, rgba(80,55,30,.28), rgba(30,22,15,.50)),
+    linear-gradient(180deg, rgba(255,240,210,.05), rgba(60,45,30,.35));
+}
+
+/* obsah karty */
+#research-grid .research-card .tile-content{
+  color: rgba(255,245,230,.95);               /* stejná světlá jako budovy */
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+}
+
+/* badge levelu – „zlatavý“ jako u budov */
+#research-grid .research-card .level{
+  background: rgba(255,230,170,.18);
+  color: #ffd773;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* vybraná karta – zlatý lem jako u budov */
+#research-grid .research-card.selected{
+  outline: 2px solid rgba(205,181,125,.9);
+  box-shadow: 0 0 8px rgba(205,181,125,.6);
+}
+
+/* nelze spustit – šedá + červený glow (stejně jako zamknuté budovy) */
+#research-grid .research-card.locked .tile-bg{
+  filter: grayscale(100%) contrast(.9) brightness(1);
+}
+#research-grid .research-card.locked{
+  outline: 2px solid rgba(255,60,60,.85);
+  box-shadow: 0 0 12px rgba(255,60,60,.35);
+}
+/* výzkumy – kliky přes obrázek projdou vždy */
+#research-grid .research-card .tile-bg{ pointer-events: none; }
+#research-grid .research-card{ cursor: pointer; }
+/* seznam požadavků v detailu budovy / výzkumů */
+#detail-box .req-list{ margin:4px 0 10px 18px; padding:0; }
+#detail-box .req-list li{ list-style:disc; }
+#detail-box .req-list li.ok{ color: var(--text); }
+#detail-box .req-list li.bad{ color: #ff6a6a; }
+/* budovy – vizuál zamčené karty */
+#buildings .card.locked{
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+  outline: 2px solid rgba(255,60,60,.85);
+  box-shadow: 0 0 12px rgba(255,60,60,.35);
+}
+/* budovy – vizuál zamčené karty */
+#buildings .card.locked{
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+  outline: 2px solid rgba(255,60,60,.85);
+  box-shadow: 0 0 12px rgba(255,60,60,.35);
+}
+/* výzkumy – klik přes obrázek projde */
+#research-grid .research-card { cursor: pointer; }
+#research-grid .research-card .tile-bg { pointer-events: none; }
+/* přepínání „podstránek“ */
+.page { display: none; }
+.page.active { display: block; }
+
+/* dvousloupcový layout: vlevo mřížka, vpravo detail */
+.grid-two {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+/* mřížka dlaždic budov i výzkumů */
+#buildings,
+#research-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+/* PŘEPÍNAČ STRÁNEK – tvrdě */
+.page{display:none !important;}
+.page.active{display:block !important;}
+/* Výzkumy: 2 sloupce na desktopu, 1 sloupec na mobilu */
+#page-vyzkumy #research-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 13px;
+}
+
+@media (max-width: 900px){
+  #page-vyzkumy .grid-two{ grid-template-columns: 1fr; }
+  #page-vyzkumy #research-grid{ grid-template-columns: 1fr; }
+}
+/* Budovy – přidej vnitřní odsazení mřížce, ať se pravý sloupec neřeže o okraj */
+#page-budovy #buildings{
+  padding: 12px;
+  box-sizing: border-box;
+}
+/* Detail budovy: 2 sloupce (vlevo produkce, vpravo akce) */
+#detail-box .grid-2{
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(240px, 1fr);
+  gap: 16px;
+}
+
+/* Tabulka "Aktuální produkce" – 4 stejné sloupce, nic se neslepuje */
+#detail-box .tbl{
+  width: 100%;
+  table-layout: fixed;             /* pevné rozložení, každý sloupec drží šířku */
+  border-collapse: collapse;
+}
+
+#detail-box .tbl th,
+#detail-box .tbl td{
+  padding: 6px 8px;
+  text-align: right;               /* čísla doprava */
+  white-space: nowrap;             /* bez zalomení */
+  font-variant-numeric: tabular-nums; /* stejné šířky číslic */
+  overflow: hidden;                /* kdyby bylo extrémně dlouhé číslo */
+  text-overflow: ellipsis;
+}
+
+#detail-box .tbl th:first-child,
+#detail-box .tbl td:first-child{
+  text-align: center;              /* /s hlavička klidně na střed */
+}
+/* Budovy – dvousloupec: víc místa mezi sloupci a širší pravý panel */
+#page-budovy .grid-two{
+  display: grid;
+  grid-template-columns: minmax(680px, 2fr) minmax(420px, 1fr); /* vlevo min. 680px, vpravo min. 420px */
+  gap: 24px;                                                   /* větší mezera mezi sloupci */
+}
+
+/* jistota: pravý panel (Detail) nepůjde užší než 420px */
+#page-budovy #detail{
+  min-width: 420px;
+}
+
+/* drobný „polštář“ uvnitř mřížky budov, ať se dlaždice nedotýkají rámu */
+#page-budovy #buildings{
+  padding: 16px;
+  box-sizing: border-box;
+}
+/* Detail budovy – pravý sloupec (Akce) zarovnat doprava */
+#detail-box .grid-2 > :nth-child(2){
+  display: flex;
+ flex-direction: column;
+  align-items: flex-end; /* tlačítko i text vpravo */
+  text-align: right;
+  gap: 6px;
+  padding-right: 8px;     /* malý odstup od okraje panelu */
+}
+
+/* jistota pro tlačítko vpravo */
+#detail-box .grid-2 > :nth-child(2) button{
+  align-self: flex-end;
+}
+/* Horní část detailu: 2 sloupce – vlevo produkce, vpravo akce */
+#detail-box .detail-top{
+  display: grid;
+  grid-template-columns: 1fr 260px; /* vpravo fixní šířka, klidně uprav */
+  gap: 12px;
+  align-items: start;
+}
+
+/* pravý sloupec – texty i tlačítko doprava */
+#detail-box .detail-actions{
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#detail-box .detail-actions button{
+  align-self: flex-end;
+}
+/* Detail: větší název budovy a rozumné rozestupy */
+#detail-box h3{
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+#detail-box .mini{
+  margin: 0 0 8px;
+}
+
+/* Přeskládání horní části detailu:
+   - z 2 sloupců uděláme 1 sloupec
+   - "Akce" (pravý box) dáme nahoru
+   - "Aktuální produkce" (levý box) půjde pod něj */
+#detail-box .grid-2{
+  display: grid;
+  grid-template-columns: 1fr;   /* jeden sloupec */
+  row-gap: 12px;
+}
+
+/* Levý box (produkce) = druhý v pořadí */
+#detail-box .grid-2 > :first-child{
+  order: 2;
+}
+
+/* Pravý box (Akce) = první v pořadí + zarovnání doleva */
+#detail-box .grid-2 > :nth-child(2){
+  order: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Tlačítko v "Akce" nech doleva, jak u výzkumů */
+#detail-box .grid-2 > :nth-child(2) .btn{
+  align-self: flex-start;
+}
+
+/* Tabulky v detailu na plnou šířku pro jistotu */
+#detail-box .tbl{
+  width: 100%;
+  table-layout: fixed;
+}
+#detail-box .req-list{
+  margin: 6px 0 12px;
+  padding: 0;
+}
+#detail-box .req-list li{
+  list-style: none;
+  margin: 2px 0;
+  font-size: 14px;
+}
+#detail-box .req-list li.ok{ color: #bde8a0; }  /* jemně zelená */
+#detail-box .req-list li.no{ color: #ffb1b1; }  /* jemně červená */
+#detail-box .mini.muted{ opacity: .85; }
+/* === Budovy: zamknuté (nesplněné požadavky) === */
+/* zšednutí + červený glow jako u výzkumů */
+.budovy-layout #buildings .card.locked{
+  filter: grayscale(100%) contrast(.9) brightness(.85);
+  outline: 2px solid rgba(220, 38, 38, .85);
+  box-shadow:
+   0 0 10px 2px rgba(220, 38, 38, .35),
+    0 0 26px 6px rgba(220, 38, 38, .20),
+    inset 0 0 0 1px rgba(220, 38, 38, .25);
+}
+/* při hoveru mírně zesil červený efekt (volitelné) */
+.budovy-layout #buildings .card.locked:hover{
+  box-shadow:
+    0 0 12px 3px rgba(220, 38, 38, .45),
+    0 0 30px 10px rgba(220, 38, 38, .24),
+    inset 0 0 0 1px rgba(220, 38, 38, .30);
+}
+/* === Výpravy === */
+.exp-grid{
+  display:grid; gap:16px; grid-template-columns: 1fr 1fr;
+}
+/* === Výpravy === */
+.exp-grid{ display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+.exp-status .phase{ font-size:22px; font-weight:800; margin:6px 0 2px; }
+.exp-status .remain{ font-size:16px; opacity:.85; }
+.exp-actions{ display:flex; gap:8px; margin:10px 0 6px; }
+.exp-log{
+  background: rgba(0,0,0,.15);
+  border: 1px solid rgba(255,255,255,.08);
+border-radius: 10px;
+ padding: 8px;
+  max-height: 220px;
+  overflow: auto;
+  font-size: .95em;
+}
+.exp-log .log-row{ padding:3px 2px; border-bottom:1px dashed rgba(255,255,255,.07); }
+.exp-log .log-row:last-child{ border-bottom:0; }
+@media (max-width: 900px){ .exp-grid{ grid-template-columns:1fr; } }
+
+/* Obrázek v detailu výzkumu vždy čistý */
+#research-detail div[style*="background-image"] {
+  filter: none !important;
+  background-blend-mode: normal !important;
+}
+/* Výzkumy – obrázek na dlaždicích bez ztmavení/sepia (jen pokud nejsou zamčené) */
+.research-card:not(.locked) .tile-bg{
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Detail výzkumu – img má být ostré a bez efektů */
+.research-detail-img{
+  filter: none !important;
+  image-rendering: auto;
+  -ms-interpolation-mode: bicubic; /* pro starší Edge – nevadí jinde */
+}
+/* Detail výzkumu – ostrý obrázek */
+.research-detail-img {
+  filter: none !important;
+  background-blend-mode: normal !important;
+  image-rendering: auto;
+}
+/* Detail výzkumu – ostrý obrázek */
+.research-detail-img {
+  filter: none !important;
+  background-blend-mode: normal !important;
+  image-rendering: auto;
+}
+/* ===== Výpravy – grid biomů s obrázky ===== */
+.exp-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.exp-card{
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  background: var(--card-bg, rgba(0,0,0,0.05));
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform .12s ease, box-shadow .12s ease, outline-color .12s ease;
+}
+
+.exp-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+}
+
+.exp-card.selected{
+  outline: 2px solid rgba(205,181,125,.9);
+  box-shadow: 0 0 0 2px rgba(205,181,125,.25) inset;
+}
+
+.exp-img{
+  width: 100%;
+  /* obrázek na výšku */
+  aspect-ratio: 3 / 4;
+  background-size: cover;
+  background-position: center;
+  filter: none;
+}
+
+.exp-caption{
+  padding: 10px 12px;
+}
+
+.exp-title{
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.exp-desc{
+  font-size: 12px;
+}
+
+/* responsivita: na menších displejích 2 sloupce */
+@media (max-width: 900px){
+  .exp-grid{
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+#page-pisari .log{
+  max-height: 180px;
+  overflow: auto;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+.page { display: none; }
+.page.active { display: block; }

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adelaida– od nuly</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="container header">
+  <h1>Adelaida</h1>
+
+  <nav class="topnav">
+    <a href="#postava">Postava</a>
+    <a href="#budovy">Budovy</a>
+    <a href="#vyzkumy">Výzkumy</a>
+    <a href="#obrana">Obrana</a>
+    <a href="#pisari">Dům písařů</a>
+    <a href="#predmety">Výroba</a>
+    <a href="#vypravy" class="cta">Výpravy</a>
+    <a href="#zpravy">Zprávy</a>
+    <a href="#ucet" data-page="ucet">Účet: <span id="account-badge">host</span></a>
+
+    <a href="#podpora">Podpora</a>
+    <a href="#forum" class="forum">Forum</a>
+  </nav>
+</header>
+
+
+  <main class="container">
+  <!-- ===== BUDOVY ===== -->
+  <section class="page active" id="page-budovy">
+    <div class="grid-two">
+      <!-- vlevo mřížka budov -->
+      <section class="card" id="budovy">
+        <h2>Budovy</h2>
+        <div id="buildings"></div>
+      </section>
+
+      
+
+      <!-- vpravo detail budovy -->
+      <section class="card" id="detail">
+        <h2>Detail</h2>
+        <div id="detail-box" class="detail">
+          <div class="muted">Klikni vlevo na budovu, zobrazí se tady její podrobnosti.</div>
+        </div>
+        <div id="stats"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== POSTAVA ===== -->
+  <section class="page" id="page-postava">
+    <div class="card"><h2>Postava</h2><p class="muted">Tady bude obrazovka postavy.</p></div>
+  </section>
+
+  <!-- ===== VÝZKUMY ===== -->
+  <section class="page" id="page-vyzkumy">
+    <div class="grid-two">
+      <!-- vlevo mřížka výzkumů -->
+      <section class="card">
+        <h2>Výzkumy</h2>
+        <div id="research-grid"></div>
+      </section>
+
+      <!-- vpravo detail výzkumu -->
+      <section class="card" id="research-detail">
+        <h2>Detail</h2>
+        <div id="research-detail-box" class="detail">
+          <div class="muted">Klikni vlevo na výzkum, zobrazí se tady jeho podrobnosti.</div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== DALŠÍ ZÁLOŽKY ===== -->
+  <section class="page" id="page-obrana">
+    <div class="card"><h2>Obrana</h2><p class="muted">Tady bude obrana tvé základny.</p></div>
+  </section>
+
+  <section class="page" id="page-predmety">
+  <div class="card"><h2>Výroba</h2><p class="muted">Výroba předmětů v kategoriích.</p></div>
+</section>
+
+
+   <section class="page" id="page-vypravy">
+    <div class="card"><!-- vyplní renderVypravy() --></div>
+  </section>
+
+  <section class="page" id="page-zpravy">
+    <div class="card"><h2>Zprávy</h2><p class="muted">Soukromé i systémové zprávy.</p></div>
+  </section>
+
+  <section class="page" id="page-podpora">
+    <div class="card"><h2>Podpora</h2><p class="muted">FAQ a kontakt.</p></div>
+  </section>
+
+
+
+
+  <section class="page" id="page-forum">
+    <div class="card"><h2>Forum</h2><p class="muted">Komunitní fórum.</p></div>
+  </section>
+</main>
+
+
+
+
+  <footer class="container foot">
+    <button id="save">Uložit</button>
+    <button id="reset">Reset</button>
+    <span class="muted" id="tick-info"></span>
+  </footer>
+
+  <!-- start hry jako ES modul -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

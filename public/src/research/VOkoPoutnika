@@ -1,0 +1,9 @@
+// src/research/VOkoPoutnika.js
+export const VOkoPoutnika = {
+  id: 'VOkoPoutnika',
+  name: 'Oko poutníka',
+  description: 'Na výpravách najdeš o 5 % více surovin za každý level.',
+  baseTime: 10,
+  timeFactor: 1.45,
+  // requires: { /* případné požadavky na budovy/výzkumy */ }
+};

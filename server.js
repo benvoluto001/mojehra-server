@@ -69,17 +69,31 @@ app.post('/logout', (req,res)=>{
 });
 
 // ---- Gate: vše mimo /login vyžaduje přihlášení
-app.use((req,res,next)=>{
-  if (req.path.startsWith('/login')) return next();
-  if (req.session.user) return next();
-  return res.redirect('/login');
+// ---- Statická hra (pustíme ji vždy – JS/CSS/obrázky)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Pomocná kontrola session (můžeš si nechat)
+app.get('/__whoami', (req, res) => res.json({ user: req.session.user ?? null }));
+
+// ---- HTML router chráněný přihlášením (SPA fallback jen pro HTML navigace)
+app.get('*', (req, res, next) => {
+  if (req.method !== 'GET') return next();
+
+  const accept = req.headers.accept || '';
+  const hasExt = path.extname(req.path) !== '';
+
+  // není to HTML navigace → předej dál (když soubor neexistuje, vrátí 404)
+  if (!accept.includes('text/html') || hasExt) return next();
+
+  // je to HTML stránka (/, /obrana, …) → musí být přihlášen
+  if (!req.session.user) return res.redirect('/login');
+
+  return res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ---- Statická hra
-app.use(express.static(path.join(__dirname,'public')));
+// zbytek 404 (nepovinné)
+app.use((req, res) => res.status(404).end());
 
-// Pomocná kontrola session (můžeš pak smazat)
-app.get('/__whoami', (req,res)=> res.json({ user: req.session.user ?? null }));
 
 // SPA fallback – jen pro HTML navigace (bez přípony)
 // aby chybějící .js/.css vracely 404 a bylo to vidět v konzoli
@@ -101,4 +115,5 @@ app.get('*', (req, res, next) => {
 
 const port = process.env.PORT || 8080;
 app.listen(port, ()=> console.log('Listening on http://localhost:'+port));
+
 

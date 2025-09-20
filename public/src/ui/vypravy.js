@@ -5,6 +5,19 @@ function imgForBiome(key){
   // obrázky dej do: ./src/ui/obrazky/vypravy/<key>.png
   return `./src/ui/obrazky/vypravy/${key}.png`;
 }
+
+// TRVÁNÍ FÁZÍ (v sekundách)
+const PHASES = {
+  out:     5 * 60,   // cesta tam
+  explore: 20 * 60,  // průzkum
+  back:    5 * 60,   // cesta zpět
+};
+const PHASE_ORDER = ['out','explore','back'];
+const PHASE_LABEL = { out: 'cesta tam', explore: 'průzkum', back: 'cesta zpět' };
+function phasePlanned(p){ return PHASES[p] || 0; }
+
+
+
 /* ───────────────────── KONFIGURACE BIOMŮ ───────────────────── */
 const BIOMES = {
   poust: {
@@ -70,18 +83,28 @@ const BIOMES = {
 /* ───────────────────── STAV EXPEDICE ───────────────────── */
 function ensureExpeditionState(){
   if (!state.expedition){
-    state.expedition = { status: 'idle', log: [] };
+    state.expedition = { status: 'idle', log: [], biom: 'poust' };
   }
   const ex = state.expedition;
   if (!Array.isArray(ex.log)) ex.log = [];
   if (!ex.status) ex.status = 'idle';
+  if (!ex.biom) ex.biom = 'poust';
+  if (!ex.phase) ex.phase = 'out';                 // nově fáze
   if (typeof ex.updatedAt !== 'number') ex.updatedAt = Date.now();
+  if (typeof ex.startedAt !== 'number') ex.startedAt = Date.now();
+  if (typeof ex.remaining !== 'number') ex.remaining = 0;
   return ex;
 }
 
+
 /* ───────────────────── POMOCNÉ ───────────────────── */
 const NOW = () => Date.now();
-const s   = (n) => `${Math.max(0, Math.ceil(n||0))}s`;
+const s = (n) => { 
+  n = Math.max(0, Math.ceil(n||0)); 
+  const m = Math.floor(n/60), sec = n % 60; 
+  return m > 0 ? `${m} m ${sec}s` : `${sec}s`; 
+};
+
 const fmt = (n) => Number(n ?? 0).toLocaleString('cs-CZ');
 const rand = (min,max) => Math.floor(min + Math.random()*(max-min+1));
 
@@ -101,6 +124,27 @@ function pushLog(msg){
   ex.log.unshift(line);
   ex.log = ex.log.slice(0, 40);
 }
+function advancePhase(){
+  const ex = ensureExpeditionState();
+  if (ex.phase === 'out'){
+    ex.phase = 'explore';
+    ex.startedAt = NOW();
+    ex.remaining = phasePlanned('explore');
+    pushLog('Karavana dorazila na místo. Začíná průzkum (20 min).');
+    return;
+  }
+  if (ex.phase === 'explore'){
+    ex.phase = 'back';
+    ex.startedAt = NOW();
+    ex.remaining = phasePlanned('back');
+    pushLog('Průzkum dokončen. Návrat (5 min).');
+    return;
+  }
+  if (ex.phase === 'back'){
+    finishExpedition();
+  }
+}
+
 
 /* ───────────────────── VÝZKUMY (modifikátory) ───────────────────── */
 function researchLevel(id){ return state.research?.[id]?.level || 0; }
@@ -188,38 +232,41 @@ function finishExpedition(){
 function tick(){
   const ex = ensureExpeditionState();
   if (ex.status !== 'running'){ stopTimer(); return; }
+
+  const planned = phasePlanned(ex.phase);
   const now = NOW();
   const elapsed = Math.floor((now - (ex.startedAt || now)) / 1000);
-  ex.remaining = Math.max(0, (ex.duration || 0) - elapsed);
+  ex.remaining = Math.max(0, planned - elapsed);
   ex.updatedAt = now;
+
   if (ex.remaining <= 0){
-    stopTimer();
-    finishExpedition();
+    advancePhase();
   }else{
     const page = document.getElementById('page-vypravy');
     if (page?.classList.contains('active')) renderVypravy();
   }
 }
 
+
 /* ───────────────────── PUBLIC API ───────────────────── */
 export function startExpedition(){
   const ex = ensureExpeditionState();
   if (ex.status === 'running') return;
 
-  const duration = (BIOMES[ex.biom]?.baseDuration) || 2;
-  ex.status = 'running';
-  ex.duration = duration;
+  ex.status    = 'running';
+  ex.phase     = 'out';
   ex.startedAt = NOW();
-  ex.remaining = duration;
+  ex.remaining = phasePlanned('out');
   ex.updatedAt = NOW();
 
-  pushLog(`Vypravil jsi karavanu do oblasti: ${BIOMES[ex.biom]?.label || 'Neznámo'}.`);
+  pushLog(`Vypravil jsi karavanu do oblasti: ${BIOMES[ex.biom]?.label || 'Neznámo'}. (cesta tam 5 min)`);
   save?.();
 
   stopTimer();
-  _timer = setInterval(tick, 200);
+  _timer = setInterval(tick, 1000);
   renderVypravy();
 }
+
 
 export function abortExpedition(){
   const ex = ensureExpeditionState();
@@ -236,20 +283,25 @@ export function abortExpedition(){
 export function resumeExpeditionOnLoad(){
   const ex = ensureExpeditionState();
   if (ex.status !== 'running') return;
+
+  const planned = phasePlanned(ex.phase);
   const now = NOW();
   const elapsed = Math.floor((now - (ex.startedAt || now))/1000);
-  ex.remaining = Math.max(0, (ex.duration || 0) - elapsed);
+  ex.remaining = Math.max(0, planned - elapsed);
   ex.updatedAt = now;
-  if (ex.remaining <= 0) finishExpedition();
-  else { stopTimer(); _timer = setInterval(tick, 200); }
+
+  if (ex.remaining <= 0) advancePhase();
+  else { stopTimer(); _timer = setInterval(tick, 1000); }
 }
+
 
 function statusText(ex){
   if (!ex || ex.status === 'idle') return 'Čeká na vypravení.';
-  if (ex.status === 'running')     return `Probíhá výprava do „${BIOMES[ex.biom]?.label || 'Neznámo'}“.`;
+  if (ex.status === 'running')     return `Probíhá ${PHASE_LABEL[ex.phase] || ex.phase} do „${BIOMES[ex.biom]?.label || 'Neznámo'}“.`;
   if (ex.status === 'done')        return 'Výprava dokončena.';
   return ex.status || '';
 }
+
 
 /* ───────────────────── RENDER ───────────────────── */
 export function renderVypravy(){
@@ -283,7 +335,8 @@ export function renderVypravy(){
             <option value="velka">Velká</option>
           </select>
         </label>
-        <div class="muted">Doba výpravy: 2 s. Negativní příhoda sníží loot o 70 %.</div>
+        <div class="muted">Doba výpravy: 5 min tam + 20 min průzkum + 5 min zpět. Negativní příhoda sníží loot o 70 %.</div>
+
       </div>
 
       <div class="row" style="gap:8px; margin-top:6px;">

@@ -112,6 +112,28 @@
     <button id="reset">Reset</button>
     <span class="muted" id="tick-info"></span>
   </footer>
+<!-- Debug overlay pro chyby modulů a runtime -->
+<script>
+  (function () {
+    function show(msg) {
+      var box = document.getElementById('dbg-err');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'dbg-err';
+        box.style.cssText =
+          'position:fixed;left:10px;bottom:10px;max-width:600px;background:#300;color:#fff;padding:10px 12px;border:1px solid #f66;border-radius:8px;font:12px/1.4 system-ui;z-index:99999;white-space:pre-wrap';
+        document.body.appendChild(box);
+      }
+      box.textContent = msg;
+    }
+    window.addEventListener('error', function (e) {
+      show('JS chyba: ' + e.message + '\nSoubor: ' + (e.filename || 'neznámý'));
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      show('Promise chyba: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+    });
+  })();
+</script>
 
   <!-- start hry jako ES modul -->
   <script type="module" src="./src/main.js"></script>

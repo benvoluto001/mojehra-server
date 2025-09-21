@@ -47,6 +47,7 @@ export class Pila extends BaseBuilding {
       id: 'pila',
       name: 'Pila',
       output: 'dřevo',
+      imageKey: 'pila',
 
       // Tyto základní hodnoty necháváme minimální – reálnou produkci vrací funkce níže.
       baseRate: BASE_PROD_PER_HOUR, // pro zobrazení lvl1, pokud BaseBuilding něco čte

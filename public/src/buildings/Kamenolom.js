@@ -13,7 +13,7 @@ import { BaseBuilding } from './BaseBuilding.js';
  */
 export class Kamenolom extends BaseBuilding {
   constructor(){
-    const BASE_PROD_PER_HOUR = 80; // lvl1 = 80/h
+    const BASE_PROD_PER_HOUR = 300; // lvl1 = 80/h
     const BASE_UPG_TIME_SEC  = 25; // 25 s na upgrade (konstantně)
 
     // Výpočet produkce/hod podle levelu

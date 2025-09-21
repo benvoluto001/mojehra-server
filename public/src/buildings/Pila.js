@@ -19,7 +19,7 @@ import { BaseBuilding } from './BaseBuilding.js';
 export class Pila extends BaseBuilding {
   constructor(){
     // Konstanty pro výpočty (přímo z tvého zadání)
-    const BASE_PROD_PER_HOUR = 100; // lvl1
+    const BASE_PROD_PER_HOUR = 550; // lvl1
     const BASE_UPG_TIME_SEC  = 20;  // 20 s
     const TIME_MULT          = 1.25;
 
@@ -29,9 +29,9 @@ export class Pila extends BaseBuilding {
 
       let rate = BASE_PROD_PER_HOUR;
       for (let i = 2; i <= lvl; i++){
-        if (i <= 5)       rate *= 1.25; // 1–5
-        else if (i <= 10) rate *= 1.12; // 6–10
-        else              rate *= 1.07; // 11+
+        if (i <= 5)       rate *= 1.45; // 1–5
+        else if (i <= 10) rate *= 1.20; // 6–10
+        else              rate *= 1.12; // 11+
       }
       return rate;
     };

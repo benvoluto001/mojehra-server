@@ -16,7 +16,7 @@ import { BaseBuilding } from './BaseBuilding.js';
  */
 export class ZeleznyDul extends BaseBuilding {
   constructor(){
-    const BASE_PROD_PER_HOUR = 30; // lvl1 = 30/h
+    const BASE_PROD_PER_HOUR = 240; // lvl1 = 30/h
     const BASE_UPG_TIME_SEC  = 40; // 40 s na každý upgrade (konstantně)
 
     // Výpočet produkce/hod podle levelu

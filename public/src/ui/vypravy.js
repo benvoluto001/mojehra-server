@@ -15,6 +15,12 @@ const PHASES = {
 const PHASE_ORDER = ['out','explore','back'];
 const PHASE_LABEL = { out: 'cesta tam', explore: 'průzkum', back: 'cesta zpět' };
 function phasePlanned(p){ return PHASES[p] || 0; }
+function statusText(ex){
+  if (!ex) return 'Připraveno';
+  if (ex.status === 'running') return `Běží — ${PHASE_LABEL[ex.phase] || ex.phase}`;
+  if (ex.status === 'done')    return 'Dokončeno';
+  return 'Připraveno';
+}
 
 
 
@@ -240,11 +246,13 @@ function tick(){
   ex.updatedAt = now;
 
   if (ex.remaining <= 0){
-    advancePhase();
-  }else{
-    const page = document.getElementById('page-vypravy');
-    if (page?.classList.contains('active')) renderVypravy();
-  }
+  advancePhase();
+  renderVypravy(); // hned ukaž změnu fáze/odpočet
+}else{
+  const page = document.getElementById('page-vypravy');
+  if (page?.classList.contains('active')) renderVypravy();
+}
+
 }
 
 

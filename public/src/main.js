@@ -45,6 +45,12 @@ import { ElixirBohu }     from './stroje/elixiry/ElixirBohu.js';
 
 import { RESEARCHES } from './research/index.js';
 
+
+export function refreshAccountLabel(){
+  const el = document.getElementById('account-label');
+  if (el) el.textContent = (state?.stats?.nickname || 'host');
+}
+
 // ===== pomocné =====
 function updateAccountBadge(){
   const el = document.getElementById('account-badge');
@@ -118,6 +124,8 @@ function mountApp(){
     ...foodMachines(),
     ...mElixiry,
     ...weaponMachines(),
+    refreshAccountLabel(),
+
   ];
 
   // dostupné globálně (render, offline výpočet apod.)

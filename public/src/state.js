@@ -296,20 +296,32 @@ export function addCapacity(delta){
 
 // ===== Výzkumy: efekty =====
 
-// Produkční rychlost budovy s ohledem na výzkumy
+// Produkční rychlost budovy (VŽDY /s). Preferuje funkce vracející /h a přepočítá.
 export function getBuildingRate(b){
-  const base = (b.baseRate || 0) * (b.level || 0);
+  const H = 3600;
+
+  // 1) Pokud budova umí /h, vezmeme to přímo z ní a převedeme na /s
+  let perHour = 0;
+  if (typeof b.ratePerHour === 'function')    perHour = Number(b.ratePerHour(b.level) || 0);
+  else if (typeof b.getRatePerHour === 'function') perHour = Number(b.getRatePerHour(b.level) || 0);
+  else if (typeof b._prodPerHour === 'function')   perHour = Number(b._prodPerHour(b.level) || 0);
+
+  let basePerSec;
+  if (perHour > 0){
+    basePerSec = perHour / H;  // přepočet /h -> /s
+  }else{
+    // 2) Fallback pro staré budovy: původní význam baseRate je /s * level
+    basePerSec = Number(b.baseRate || 0) * Math.max(1, Number(b.level || 1));
+  }
+
+  // 3) Aplikuj výzkumy a globální buffy (aditivně sečtené %, pak násobeno)
   const mulResearch = buildingMultiplier(state, b);
+  const globalProd  = Number(state?.effectsBuff?.prodAll || 0);
+  const byRes       = Number(state?.effects?.prodByRes?.[b.output] || 0);
 
-  // globální buff (např. Elixír bohů)
-  const globalProd = Number(state?.effectsBuff?.prodAll || 0);
-
-  // písařské bonusy na konkrétní surovinu (dřevo/kámen/…)
-  const byRes = Number(state?.effects?.prodByRes?.[b.output] || 0);
-
-  // vše se sčítá (aditivní %), pak vynásobí
-  return base * mulResearch * (1 + globalProd + byRes);
+  return basePerSec * mulResearch * (1 + globalProd + byRes);
 }
+
 
 
 

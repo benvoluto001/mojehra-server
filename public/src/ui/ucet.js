@@ -49,16 +49,8 @@ if (lbl) lbl.textContent = state.stats.nickname || 'host';
 page.querySelector('#btn-save')?.addEventListener('click', ()=>{
   state.stats.nickname = (nick.value||'').trim() || 'host';
   save?.();
-  const el = document.getElementById('account-label');
-  if (el) el.textContent = state.stats.nickname;   // ← Tohle ponech/zameň, ať se hlavička hned přepíše
+  
 });
 
 
-  const nick = page.querySelector('#nick');
-  page.querySelector('#btn-save')?.addEventListener('click', ()=>{
-    state.stats.nickname = (nick.value||'').trim() || 'host';
-    save?.();
-    const el = document.getElementById('account-label');
-    if (el) el.textContent = state.stats.nickname;
-  });
 }

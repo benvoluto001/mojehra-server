@@ -45,6 +45,23 @@ import { ElixirBohu }     from './stroje/elixiry/ElixirBohu.js';
 
 import { RESEARCHES } from './research/index.js';
 
+// DOPLŇ POD IMPORTY
+export async function syncAccountFromSession(){
+  try{
+    const r = await fetch('/__whoami');
+    const j = await r.json();
+    const u = (j && j.user) ? j.user : 'host';
+    const el = document.getElementById('account-label');
+    if (el) el.textContent = u;
+
+    // volitelně: když nemáš ještě přezdívku, předvyplň ji jménem účtu
+    if (!state.stats) state.stats = {};
+    if (!state.stats.nickname || state.stats.nickname === 'host') {
+      state.stats.nickname = u;
+      save?.();
+    }
+  }catch(e){}
+}
 
 export function refreshAccountLabel(){
   const el = document.getElementById('account-label');
@@ -119,14 +136,13 @@ function mountApp(){
   ].map(m => (m.category = 'elixiry', m));
 
   const machines = [
-    mAnkarit,
-    mPulzar,
-    ...foodMachines(),
-    ...mElixiry,
-    ...weaponMachines(),
-    refreshAccountLabel(),
+  mAnkarit,
+  mPulzar,
+  ...foodMachines(),
+  ...mElixiry,
+  ...weaponMachines(),
+];
 
-  ];
 
   // dostupné globálně (render, offline výpočet apod.)
   window.__allBuildings = buildings;
@@ -134,8 +150,9 @@ function mountApp(){
 
   // ========== účty a save ==========
   ensureGuestIfNone();     // nastav „host“, pokud není přihlášen nikdo
-  load(buildings);         // načti save pro aktuálního uživatele
-  updateAccountBadge();
+load(buildings);         // načti save pro aktuálního uživatele
+syncAccountFromSession(); // přepiš „Účet: …“ podle session (/__whoami)
+
 
   // obnova rozběhnutých dějů po načtení
   resumeExpeditionOnLoad();

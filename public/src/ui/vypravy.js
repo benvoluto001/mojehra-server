@@ -280,60 +280,57 @@ export function abortExpedition(){
   renderVypravy();
 }
 
-export function resumeExpeditionOnLoad(){ /* … */ }
-
+export function resumeExpeditionOnLoad(){
   const ex = ensureExpeditionState();
-  if (ex.status !== 'running'){ stopTimer(); return; }
+  if (ex.status !== 'running'){ 
+    stopTimer(); 
+    return; 
+  }
 
   const now = NOW();
   let elapsed = Math.floor((now - (ex.startedAt || now)) / 1000);
 
-  // dožene offline – přeskočí dokončené fáze (out → explore → back → finish)
+  // Dožene offline – přeskakuje celé fáze (out → explore → back → finish)
   while (true){
     const planned = phasePlanned(ex.phase);
 
-    // jsme uprostřed aktuální fáze → jen dopočítej a spusť tikání
+    // Jsme uprostřed aktuální fáze → jen dopočítej a spusť tikání
     if (elapsed < planned){
       ex.remaining = planned - elapsed;
       ex.updatedAt = now;
+
       stopTimer();
       _timer = setInterval(tick, 1000);
-      return;
+      return;               // ← uvnitř funkce, OK
     }
 
-    // fáze doběhla offline → uber její délku a přepni fázi
+    // Fáze doběhla už během nepřítomnosti → odečti a přepni fázi
     elapsed -= planned;
 
     if (ex.phase === 'out'){
       ex.phase = 'explore';
-      ex.startedAt = now - elapsed*1000; // ve fázi explore už jsme "elapsed" sekund
+      ex.startedAt = now - elapsed*1000;
       pushLog('Karavana dorazila na místo. Začíná průzkum (20 min).');
       continue;
     }
+
     if (ex.phase === 'explore'){
       ex.phase = 'back';
       ex.startedAt = now - elapsed*1000;
       pushLog('Průzkum dokončen. Návrat (5 min).');
       continue;
     }
+
     if (ex.phase === 'back'){
       // celá výprava doběhla ještě během nepřítomnosti
       finishExpedition();
       stopTimer();
       ex.remaining = 0;
-      return;
+      return;               // ← uvnitř funkce, OK
     }
   }
-
-
-
-
-function statusText(ex){
-  if (!ex || ex.status === 'idle') return 'Čeká na vypravení.';
-  if (ex.status === 'running')     return `Probíhá ${PHASE_LABEL[ex.phase] || ex.phase} do „${BIOMES[ex.biom]?.label || 'Neznámo'}“.`;
-  if (ex.status === 'done')        return 'Výprava dokončena.';
-  return ex.status || '';
 }
+
 
 
 /* ───────────────────── RENDER ───────────────────── */

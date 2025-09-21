@@ -15,8 +15,6 @@ import { state } from './state.js';
 import { getCurrentUser, ensureGuestIfNone, onAuthChanged } from './auth.js';
 import { renderZebricek } from './ui/zebricek.js';
 
-
-
 import { Pila } from './buildings/Pila.js';
 import { Kamenolom } from './buildings/Kamenolom.js';
 import { StribrnyDul } from './buildings/StribrnyDul.js';
@@ -44,6 +42,118 @@ import { KrvavyElixir }   from './stroje/elixiry/KrvavyElixir.js';
 import { ElixirBohu }     from './stroje/elixiry/ElixirBohu.js';
 
 import { RESEARCHES } from './research/index.js';
+// === OFFLINE OBNOVA VÝPRAVY (bez importu z vypravy.js) ===
+
+
+
+
+// === AUTOSAVE + SAVE PŘI ODCHODU ===
+let __autosaveTimer;
+function setupAutosave(){
+  try{ clearInterval(__autosaveTimer); }catch{}
+  __autosaveTimer = setInterval(()=>{ try{ save?.(); }catch{} }, 5000); // každých 5 s
+}
+
+// ulož při skrytí záložky / zavření okna
+window.addEventListener('visibilitychange', ()=>{ if (document.hidden){ try{ save?.(); }catch{} }});
+window.addEventListener('pagehide', ()=>{ try{ save?.(); }catch{} });
+window.addEventListener('beforeunload', ()=>{ try{ save?.(); }catch{} });
+
+// ulož i při kliknutí na odkaz /logout
+document.addEventListener('click', (e)=>{
+  const a = e.target.closest?.('a[href="/logout"]');
+  if (a){ try{ save?.(); }catch{} }
+});
+
+
+let __expTimer = null;
+function __expStop(){ if (__expTimer){ clearInterval(__expTimer); __expTimer = null; } }
+
+function __phasePlanned(phase){
+  // pokud máš v appce PHASES/phasePlanned, použij je
+  if (typeof phasePlanned === 'function') return phasePlanned(phase);
+  const map = { out: 5*60, explore: 20*60, back: 5*60 }; // s
+  return map[phase] || 0;
+}
+function __pushLog(msg){ try{ (typeof pushLog==='function') && pushLog(msg); }catch{} }
+
+export function resumeExpeditionOnLoadInline(){
+  const ex = state?.expedition;
+  if (!ex || ex.status !== 'running'){ __expStop(); return; }
+
+  const now = Date.now();
+  let elapsed = Math.floor((now - (ex.startedAt || now))/1000);
+
+  // dožeň offline – přeskakuj celé fáze dokud něco zbývá
+  while (true){
+    const planned = __phasePlanned(ex.phase);
+    if (elapsed < planned){
+      // jsme uprostřed fáze → nastav zbývající čas a spusť tik
+      ex.remaining = planned - elapsed;
+      ex.updatedAt = now;
+      __expStop();
+      __expTimer = setInterval(()=>{
+        // jednoduchý tik: odpočítání zbývajících sekund
+        ex.remaining = Math.max(0, (ex.remaining||0) - 1);
+        if (ex.remaining <= 0){
+          // fáze doběhla právě teď
+          if (ex.phase === 'out'){
+            ex.phase = 'explore';
+            ex.startedAt = Date.now();
+            ex.remaining  = __phasePlanned('explore');
+            __pushLog('Karavana dorazila na místo. Začíná průzkum (20 min).');
+          }else if (ex.phase === 'explore'){
+            ex.phase = 'back';
+            ex.startedAt = Date.now();
+            ex.remaining  = __phasePlanned('back');
+            __pushLog('Průzkum dokončen. Návrat (5 min).');
+          }else{
+            // konec výpravy
+            __expStop();
+            if (typeof finishExpedition === 'function'){
+              finishExpedition();
+            }else{
+              ex.status = 'done';
+              ex.phase = 'out';
+              __pushLog('Výprava dokončena.');
+            }
+            return;
+          }
+        }
+      }, 1000);
+      return;
+    }
+
+    // celá fáze doběhla během nepřihlášení → odečti a přepni fázi
+    elapsed -= planned;
+
+    if (ex.phase === 'out'){
+      ex.phase = 'explore';
+      ex.startedAt = now - (elapsed*1000);
+      __pushLog('Karavana dorazila na místo. Začíná průzkum (20 min).');
+      continue;
+    }
+    if (ex.phase === 'explore'){
+      ex.phase = 'back';
+      ex.startedAt = now - (elapsed*1000);
+      __pushLog('Průzkum dokončen. Návrat (5 min).');
+      continue;
+    }
+    if (ex.phase === 'back'){
+      // všechno doběhlo už offline
+      __expStop();
+      if (typeof finishExpedition === 'function'){
+        finishExpedition();
+      }else{
+        ex.status = 'done';
+        ex.phase = 'out';
+        ex.remaining = 0;
+        __pushLog('Výprava dokončena.');
+      }
+      return;
+    }
+  }
+}
 
 // DOPLŇ POD IMPORTY
 export async function syncAccountFromSession(){
@@ -149,9 +259,12 @@ function mountApp(){
   window.renderPisari = renderPisari;
 
   // ========== účty a save ==========
-  ensureGuestIfNone();     // nastav „host“, pokud není přihlášen nikdo
-load(buildings);         // načti save pro aktuálního uživatele
-syncAccountFromSession(); // přepiš „Účet: …“ podle session (/__whoami)
+  ensureGuestIfNone();
+load(buildings);
+resumeExpeditionOnLoadInline();
+syncAccountFromSession();
+
+ // přepiš „Účet: …“ podle session (/__whoami)
 
 
   // obnova rozběhnutých dějů po načtení
@@ -215,6 +328,9 @@ syncAccountFromSession(); // přepiš „Účet: …“ podle session (/__whoami
   // reakce na přepnutí účtu (registrace/přihlášení/odhlášení)
   onAuthChanged(() => {
     load(buildings);
+    // po načtení savů obnov běžící výpravu (spustí časovač a dopočítá offline)
+resumeExpeditionOnLoad();
+
     updateAccountBadge();
     const name = (location.hash || '#budovy').slice(1);
     handleRoute(); // překresli aktuální záložku

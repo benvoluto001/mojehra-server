@@ -458,8 +458,10 @@ export function save(){
       research:  state.research,
       machines:  state.machines,           // ⬅ uložit stroje
       effects:    state.effects,      // ⬅ nově ukládáme kumulované bonusy písařů
-  effectsBuff: state.effectsBuff, // ⬅ případné dočasné buffy (elixíry)
-  pisari:     state.pisari,       // ⬅ stav rozběhlého zkoumání + log
+      effectsBuff: state.effectsBuff, // ⬅ případné dočasné buffy (elixíry)
+      pisari:     state.pisari,       // ⬅ stav rozběhlého zkoumání + log
+      expedition: state.expedition || { status:'idle', log:[] },
+
     },
     buildings: serializeBuildings(buildings), // ⬅ uložit budovy (id, level, akce, remaining…)
     savedAt: Date.now(),
@@ -505,8 +507,10 @@ const raw = localStorage.getItem(_saveKey());
     if (data.state.player)   state.player   = data.state.player;
     if (data.state.research) state.research = data.state.research;
     if (data.state.effects)     state.effects     = data.state.effects;
-if (data.state.effectsBuff) state.effectsBuff = data.state.effectsBuff;
-if (data.state.pisari)      state.pisari      = data.state.pisari;
+    if (data.state.effectsBuff) state.effectsBuff = data.state.effectsBuff;
+    if (data.state.pisari)      state.pisari      = data.state.pisari;
+    state.expedition = data.state.expedition || state.expedition || { status:'idle', log:[] };
+
 
     const ensureResearchKey = (key) => {
   if (!state.research[key]) {

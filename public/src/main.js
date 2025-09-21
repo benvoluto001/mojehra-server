@@ -49,15 +49,32 @@ import { RESEARCHES } from './research/index.js';
 
 // === AUTOSAVE + SAVE PŘI ODCHODU ===
 let __autosaveTimer;
+let __SKIP_SAVE_ONCE = false; // ⬅ při resetu = true → nic se neuloží
+
 function setupAutosave(){
   try{ clearInterval(__autosaveTimer); }catch{}
   __autosaveTimer = setInterval(()=>{ try{ save?.(); }catch{} }, 5000); // každých 5 s
 }
 
 // ulož při skrytí záložky / zavření okna
-window.addEventListener('visibilitychange', ()=>{ if (document.hidden){ try{ save?.(); }catch{} }});
-window.addEventListener('pagehide', ()=>{ try{ save?.(); }catch{} });
-window.addEventListener('beforeunload', ()=>{ try{ save?.(); }catch{} });
+window.addEventListener('visibilitychange', ()=>{ if (document.hidden){ try{ if (!__SKIP_SAVE_ONCE) save?.(); }catch{} }});
+window.addEventListener('pagehide',         ()=>{ try{ if (!__SKIP_SAVE_ONCE) save?.(); }catch{} });
+window.addEventListener('beforeunload',     ()=>{ try{ if (!__SKIP_SAVE_ONCE) save?.(); }catch{} });
+
+
+// === HARD RESET HRY ===
+function hardResetGame(){
+  try{ __SKIP_SAVE_ONCE = true; }catch(e){}           // ⬅ stopni všechny savy
+  try{ clearInterval(__autosaveTimer); }catch(e){}    // ⬅ vypni autosave
+  try{
+    localStorage.clear();                              // ⬅ smaž všechno uložené
+    sessionStorage.clear();
+  }catch(e){}
+  location.reload();                                   // ⬅ čisté načtení
+}
+
+
+
 
 // ulož i při kliknutí na odkaz /logout
 document.addEventListener('click', (e)=>{
@@ -283,10 +300,11 @@ syncAccountFromSession();
     alert('Uloženo ✅');
   });
   document.getElementById('reset')?.addEventListener('click', () => {
-  const u = getCurrentUser?.() || 'host';
-  localStorage.removeItem(`idle_save:${u}`); // smaž jen save aktuálního účtu
-  location.reload();
+  const ok = confirm('Opravdu smazat celý postup a začít znovu?');
+  if (!ok) return;
+  hardResetGame();
 });
+
 
 
   // ===== Mini router (hash) =====

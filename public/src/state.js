@@ -433,6 +433,9 @@ function _saveKey(){
 }
 
 export function save(){
+    // pokud běží hard reset, na jeden (resp. do reloadu) žádný save
+  if (typeof window !== 'undefined' && window.__SKIP_SAVE_ONCE) return;
+
   const buildings = (typeof window !== 'undefined' && window.__allBuildings) || [];
   const payload = {
     state: {

@@ -563,6 +563,57 @@ main{max-width:900px;margin:24px auto;padding:0 16px}
   gap: 16px;
 }
 /* ===== Dlaždice budovy – nelze postavit ===== */
+
+/* ===== Budovy: mřížka + čtvercové dlaždice ===== */
+#buildings{
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr); /* vždy 3 sloupce */
+}
+
+
+/* každá budova je přesný čtverec (výška = šířka) */
+.card.building{
+  aspect-ratio: 1 / 1;        /* <— klíčové */
+  padding: 12px;
+  position: relative;         /* pro odznak Lvl a bg */
+  overflow: hidden;
+}
+
+/* obsah rozprostřeme na celou výšku, texty budou nahoře + dole */
+.card.building .tile-content{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* odznak Lvl doprava nahoru (jako na screenu) */
+.card.building .level{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-weight: 800;
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.2);
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: #e7ff2f;
+}
+
+/* řádek s /h hodnotou zarovnáme k dolnímu okraji */
+.card.building .row:last-of-type{
+  align-items: flex-end;
+}
+
+/* menší displeje – dlaždice úžeji, ale pořád čtverec */
+@media (max-width: 800px){
+  #buildings{
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+}
+
 .card.locked{
   outline: 2px solid rgba(220, 38, 38, .85);                 /* červený rámeček */
   box-shadow:
@@ -1473,3 +1524,18 @@ border-radius: 10px;
 }
 .page { display: none; }
 .page.active { display: block; }
+@media (max-width: 900px){
+  #buildings{
+    grid-template-columns: repeat(2, 1fr); /* tablety 2 sloupce */
+  }
+}
+@media (max-width: 600px){
+  #buildings{
+    grid-template-columns: 1fr; /* mobily 1 sloupec */
+  }
+}
+#buildings{
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr); /* vždy 3 sloupce */
+}

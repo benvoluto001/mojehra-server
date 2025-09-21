@@ -9,6 +9,25 @@ const s      = (n) => `${Math.max(0, Math.ceil(Number(n) || 0))}s`;
 import { state, save } from '../state.js';
 import { getBuildingRate } from '../state.js';
 
+// === Pomocníci pro výpočet produkce/časů z budovy ===
+const HOUR = 3600;
+function getRatePerHourAt(b, level){
+  if (typeof b.ratePerHour === 'function')    return Number(b.ratePerHour(level) || 0);
+  if (typeof b._prodPerHour === 'function')   return Number(b._prodPerHour(level) || 0);
+  if (typeof b.getRatePerHour === 'function') return Number(b.getRatePerHour(level) || 0);
+  const L = Number(level || b.level || 1);
+  return Number(b.baseRate || 0) * Math.max(1, L);
+}
+function getUpgradeTimeAt(b, level){
+  if (typeof b.getUpgradeTime === 'function') return Math.ceil(Number(b.getUpgradeTime(level) || 0));
+  return Math.ceil(Number(b.upgradeTime || 0));
+}
+
+
+
+// Cesta k obrázkům budov (v public/…)
+const BUILDING_IMAGE_BASE = './src/ui/obrazky';
+
 let selectedResourceKey = null; // co je vybráno vlevo (kvůli zvýraznění)
 
 // hezké názvy (podle konfigurací v globálu)
@@ -193,6 +212,10 @@ export function renderDetail(b){
 
   const all = window.__allBuildings || [];
   const H = 3600, D = 86400, W = 604800;
+  // aktuální produkce /h (během upgradu jede starý lvl)
+const producesNow = b.isBuilt && (!b.isBusy?.() || b.action === 'upgrade');
+const rateNowH = producesNow ? getRatePerHourAt(b, b.level) : 0;
+
 
   // stav & ceny
   const canBuild  = !b.isBuilt && b.canStartBuild?.(all);
@@ -204,22 +227,23 @@ export function renderDetail(b){
   const costBuild = Object.entries(buildCostObj).map(([k,v]) => `${fmtInt(v)} ${k}`).join(', ') || '—';
   const costUpg   = Object.entries(upgradeCostObj).map(([k,v]) => `${fmtInt(v)} ${k}`).join(', ') || '—';
 
-  // aktuální produkce (během upgrade běží na starém lvl)
-  const producesNow = b.isBuilt && (!b.isBusy() || b.action === 'upgrade');
-  const rateNow = producesNow ? (b.rate || 0) : 0;
+ 
 
-  // projekce +10 lvl
+
   const L = b.level || 1;
-  const rows = Array.from({length:10}, (_,i) => {
-    const next = L + i + 1;
-    const totalAtNext = (b.baseRate * next);
-    const inc = b.baseRate * (i + 1);
-    return `<tr>
-      <td>Lvl ${next}</td>
-      <td>+${fmt(inc)}/s</td>
-      <td>${fmt(totalAtNext)}/s</td>
-    </tr>`;
-  }).join('');
+const rows = Array.from({length:10}, (_,i) => {
+  const next = L + i + 1;
+  const curH  = getRatePerHourAt(b, L);
+  const nextH = getRatePerHourAt(b, next);
+  const incH  = Math.max(0, nextH - curH);
+  return `<tr>
+    <td>Lvl ${next}</td>
+    <td>+${fmt(incH)}/h</td>
+    <td>${fmt(nextH)}/h</td>
+  </tr>`;
+}).join('');
+
+
 
   // Požadavky (budovy + výzkumy) – umístěno hned pod nadpis a úroveň
   const reqHTML = renderReqHTML(b, state);
@@ -235,8 +259,16 @@ export function renderDetail(b){
     ${reqHTML}
 
     <h4>Akce</h4>
-    <div class="mini">${b.isBuilt ? 'Cena upgradu' : 'Cena stavby'}: ${b.isBuilt ? costUpg : costBuild}</div>
-    <div class="mini">${b.isBuilt ? 'Doba vylepšení' : 'Doba stavby'}: ${s(b.isBuilt ? b.upgradeTime : b.buildTime)}</div>
+    <div class="mini">
+  ${b.isBuilt ? 'Doba vylepšení' : 'Doba stavby'}:
+  ${s(b.isBuilt ? getUpgradeTimeAt(b, b.level) : b.buildTime)}
+</div>
+<div class="mini">
+  ${b.isBuilt ? 'Cena upgradu' : 'Cena stavby'}:
+  ${b.isBuilt ? costUpg : costBuild}
+</div>
+
+
     <button
       id="${b.isBuilt ? 'btn-upg' : 'btn-build'}"
       class="btn"
@@ -263,10 +295,11 @@ export function renderDetail(b){
       </thead>
       <tbody>
         <tr>
-          <td>${fmt(rateNow)}</td>
-          <td>${fmt(rateNow * H)}</td>
-          <td>${fmt(rateNow * D)}</td>
-          <td>${fmt(rateNow * W)}</td>
+          <td>${fmt(rateNowH / HOUR)}</td>
+          <td>${fmt(rateNowH)}</td>
+          <td>${fmt(rateNowH * 24)}</td>
+          <td>${fmt(rateNowH * 24 * 7)}</td>
+
         </tr>
       </tbody>
     </table>
@@ -292,10 +325,10 @@ export function renderDetail(b){
       </thead>
       <tbody>
         <tr>
-          <td>${b.output || '—'}</td>
-          <td>${fmt(rateNow)}</td>
-          <td>${fmt(rateNow * H)}</td>
-          <td>${fmt(rateNow * D)}</td>
+          <td>${fmt(rateNowH / HOUR)}</td>
+          <td>${fmt(rateNowH)}</td>
+          <td>${fmt(rateNowH * 24)}</td>
+          <td>${fmt(rateNowH * 24 * 7)}</td>
         </tr>
       </tbody>
     </table>
@@ -453,111 +486,78 @@ function ensureBudovyLayout(){
   return { page, grid, detail };
 }
 
-export function renderBuildings(buildings){
-  const ctx = ensureBudovyLayout();
-  const grid = (ctx && ctx.grid) || document.getElementById('buildings');
+export function renderBuildings(buildingsMaybe){
+  const buildings = buildingsMaybe || window.__allBuildings || [];
+  const grid = document.getElementById('buildings');
   if (!grid) return;
 
   grid.innerHTML = '';
-  grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = 'repeat(3, minmax(180px, 1fr))';
-  grid.style.gap = '12px';
 
-  // obrázky budov podle ID (uprav dle svých souborů)
-  const IMG = {
-    pila: './src/ui/obrazky/pila.PNG',
-    kamenolom: './src/ui/obrazky/kamenolom.png',
-    zeleznydul: './src/ui/obrazky/zeleznydul.png',
-    stribrnyDul: './src/ui/obrazky/stribrnydul.png',
-    ZlatyDul: './src/ui/obrazky/zlatydul.png',
-    KrystalHvezdnehoJadra: './src/ui/obrazky/krystalhvezdnehojadra.png',
-    EnergetickeJadro: './src/ui/obrazky/energetickejadro.png',
-    sklad: './src/ui/obrazky/sklad.png',
-    DatoveArtefakty: './src/ui/obrazky/datoveartefakty.png',
-    BioMechanickeVlakno: './src/ui/obrazky/vlakno.png',
-    biomechanickevlakno: './src/ui/obrazky/vlakno.png',
-    MimozemskaSlitina:   './src/ui/obrazky/mimozemskaslitina.png',
-    mimozemskaslitina:   './src/ui/obrazky/mimozemskaslitina.png',
-    FarmaNaObili: './src/ui/obrazky/obili.png',
-    FarmaNaMaso:  './src/ui/obrazky/maso.png',
+  for (const b of buildings){
+    const div = document.createElement('div');
+    div.className = 'card building';
 
+    // "locked" = nestojí a nesplňuje požadavky
+    const canBuild = !b.isBuilt && b.canStartBuild?.(buildings);
+    if (!b.isBuilt && !canBuild) div.classList.add('locked');
 
-  };
-  const getImg = (id) => IMG[id] || IMG[(id || '').toLowerCase()];
+    // obrázek dlaždice (vezmeme imageKey nebo id)
+    const key = b.imageKey || b.id || '';
+    const bgStyle = `background-image:
+      linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55)),
+      url('./src/ui/obrazky/${key}.png')`;
 
-  const THEME_FG = '#E8D3B5';   // světlá sepia pro text
-  const THEME_MUTED = '#CDB896'; // tlumená sepia
-  const H = 3600;
+    // aktuální rychlost /h (během upgradu jede starý level)
+    const producesNow = b.isBuilt && (!b.isBusy?.() || b.action === 'upgrade');
+    const ratePerHour = producesNow ? getRatePerHourAt(b, b.level) : 0;
 
-  buildings.forEach(b => {
-    const busy = typeof b.isBusy === 'function' ? b.isBusy() : false;
-    const producesNow = b.isBuilt && (!busy || b.action === 'upgrade');
-    const perSec  = producesNow ? (Number(b.rate) || 0) : 0;
-    const perHour = perSec * H;
+    // vybraná karta
+    const selected = (window.__selectedBuildingId && window.__selectedBuildingId === b.id);
+    if (selected) div.classList.add('selected');
 
-    const tile = document.createElement('button');
-    tile.className = 'card';
-    tile.setAttribute('data-bid', b.id);
-    tile.style.textAlign = 'left';
-    tile.style.cursor = 'pointer';
-    tile.style.aspectRatio = '1 / 1';
-    tile.style.display = 'flex';
-    tile.style.flexDirection = 'column';
-    tile.style.justifyContent = 'space-between';
-    tile.setAttribute('data-bid', b.id);
-        // je budova zamknutá (nesplňuje požadavky na stavbu)?
-    const unmetReq = !b.isBuilt && !(b.canStartBuild?.(buildings));
-    if (unmetReq) {
-      tile.classList.add('locked');
-    }
+    div.innerHTML = `
+      <div class="tile-bg" style="${bgStyle}"></div>
+      <div class="tile-content">
+        <div class="row">
+          <h3>${b.name}</h3>
+          <span class="level">Lvl: ${b.isBuilt ? b.level : 0}</span>
+        </div>
 
+        <div class="row">
+          <span class="muted">/h</span>
+          <b>${Math.floor(ratePerHour).toLocaleString('cs-CZ')}</b>
+          <span class="muted">${b.output || ''}</span>
+        </div>
 
-    // obrázek pro danou budovu (pokud existuje)
-    const img = getImg(b.id);
-    if (img){
-      tile.style.backgroundImage =
-        `linear-gradient(to bottom right, rgba(45,34,24,.55), rgba(45,34,24,.55)), url("${img}")`;
-      tile.style.backgroundSize = 'cover';
-      tile.style.backgroundPosition = 'center';
-      tile.style.color = THEME_FG;
-      tile.style.textShadow = '0 1px 2px rgba(0,0,0,.45)';
-    }
+        ${b.isBusy?.() ? `
+  <div class="progress" style="margin-top:8px; position:relative;">
+    <div class="bar" style="width:${Math.round(100 * (1 - (b.remaining/(b.action==='build'?b.buildTime:getUpgradeTimeAt(b, b.level)))))}%"></div>
+  </div>
+  <div class="mini muted" style="margin-top:4px; text-align:right;">
+    ${b.action === 'build' ? 'Stavba' : 'Vylepšení'} — zbývá ${s(b.remaining)}
+  </div>
+` : ''}
 
-    const lvl = b.isBuilt ? (b.level || 0) : 0;
-    const busyText = busy ? (b.action === 'build' ? ' • staví se ⏳' : ' • upgrade ⏫') : '';
-    const useMuted = img ? '' : 'muted';
-    const mutedInline = img ? `style="color:${THEME_MUTED}"` : '';
-
-    tile.innerHTML = `
-      <div>
-        <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${b.name}</div>
-        <div class="mini ${useMuted}" ${mutedInline}>Lvl: ${lvl}${busyText}</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="mini ${useMuted}" ${mutedInline}>/h</div>
-        <div style="font-weight:700;">${Number(perHour).toLocaleString('cs-CZ')}</div>
-        ${b.output ? `<div class="mini ${useMuted}" ${mutedInline}>${b.output}</div>` : ''}
       </div>
     `;
 
-    if (window.__selectedBuildingId === b.id){
-      tile.style.outline = '2px solid rgba(205, 181, 125, .9)';
-      tile.style.boxShadow = '0 0 8px rgba(205,181,125,.6)';
-    }
+    // klik → ukaž detail a zvýrazni
+    div.addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.__selectedBuildingId = b.id;
+      renderDetail(b);
+      renderBuildings(buildings);
+    });
 
-    grid.appendChild(tile);
-  });
+    grid.appendChild(div);
+  }
 
-  // klik na kartu → otevři detail
-  grid.onclick = (e) => {
-    const btn = e.target.closest('[data-bid]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-bid');
-    const b = buildings.find(x => x.id === id);
-    if (!b) return;
-    window.__selectedBuildingId = id;
-    ensureBudovyLayout();
-    renderDetail(b);
-    renderBuildings(buildings); // refresh zvýraznění
-  };
+  // Auto-výběr: poprvé vyber první budovu a zobraz detail
+  if (!window.__selectedBuildingId && buildings.length){
+    window.__selectedBuildingId = buildings[0].id;
+    renderDetail(buildings[0]);
+  }else if (window.__selectedBuildingId){
+    const sel = buildings.find(x => x.id === window.__selectedBuildingId);
+    if (sel) renderDetail(sel);
+  }
 }

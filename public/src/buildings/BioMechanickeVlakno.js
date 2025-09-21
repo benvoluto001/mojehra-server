@@ -9,6 +9,7 @@ export class BioMechanickeVlakno extends BaseBuilding {
       name: 'Bio-Mechanické Vlákno',
       output: 'vlakno',          // ⬅️ nová surovina (přidáme ji do state)
       baseRate: 1,
+      imageKey: 'vlakno',
 
       // první stavba
       isBuilt: false,

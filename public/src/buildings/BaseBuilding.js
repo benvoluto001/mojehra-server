@@ -106,19 +106,25 @@ export class BaseBuilding {
     return canPay(this.getUpgradeCost());
   }
 
-  /** Spusť upgrade (zaplatí cenu a nastaví čas upgradu) */
   startUpgrade() {
     if (!this.canStartUpgrade()) return false;
     pay(this.getUpgradeCost());
-    
+
     this.action = 'upgrade';
-{
-  const mul = Math.max(0.05, 1 + Number(state?.effects?.buildTime || 0));
-  this.remaining = Math.max(0, Math.ceil(this.upgradeTime * mul));
-}
+
+    // Pokud budova poskytla funkci getUpgradeTime(level), použij ji.
+    // Jinak zachovej původní chování s this.upgradeTime.
+    const baseTime =
+      (typeof this.getUpgradeTime === 'function')
+        ? Number(this.getUpgradeTime(this.level) || 0)
+        : Number(this.upgradeTime || 0);
+
+    const mul = Math.max(0.05, 1 + Number(state?.effects?.buildTime || 0)); // záporné = rychlejší
+    this.remaining = Math.max(0, Math.ceil(baseTime * mul));
 
     return true;
   }
+
 
   /**
    * TICK (1× za sekundu):
@@ -138,13 +144,19 @@ tick(){
         this.isBuilt = true;
         // po dokončení stavby přidej kapacitu pro danou surovinu
         if (this.output) addCapacity({ [this.output]: CAP_GAIN_PER_STEP });
-      } else if (this.action === 'upgrade') {
+            } else if (this.action === 'upgrade') {
         this.level++;
-        // další upgrade bude trvat o trochu déle
-        this.upgradeTime += (this.timeIncrement | 0);
+
+        // Pokud nepoužíváme funkční výpočet času (getUpgradeTime),
+        // zachovej původní lineární navyšování upgradeTime.
+        if (typeof this.getUpgradeTime !== 'function') {
+          this.upgradeTime += (this.timeIncrement | 0);
+        }
+
         // po dokončení upgradu přidej kapacitu pro danou surovinu
         if (this.output) addCapacity({ [this.output]: CAP_GAIN_PER_STEP });
       }
+
       this.action = null;
     }
   }

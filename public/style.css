@@ -1334,7 +1334,7 @@ body::before{
 }
 /* Detail: větší název budovy a rozumné rozestupy */
 #detail-box h3{
-  font-size: 22px;
+  font-size: 35px;
   font-weight: 800;
   margin: 0 0 8px;
 }
@@ -1382,7 +1382,7 @@ body::before{
 }
 #detail-box .req-list li{
   list-style: none;
-  margin: 2px 0;
+  margin: 5px 0;
   font-size: 14px;
 }
 #detail-box .req-list li.ok{ color: #bde8a0; }  /* jemně zelená */
@@ -1574,4 +1574,13 @@ border-radius: 10px;
   height: auto;                  /* potlačí fixní výšku */
   aspect-ratio: 1 / 1;           /* čtverec */
   background-repeat: no-repeat;
+}
+/* Výzkumy – obrázek vpravo v detailu jako čtverec (stejně jako u budov) */
+#page-vyzkumy #research-detail .detail-img.square{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin-bottom: 8px;
 }

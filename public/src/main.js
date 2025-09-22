@@ -41,7 +41,8 @@ import { ElixirOdvahy }   from './stroje/elixiry/ElixirOdvahy.js';
 import { KrvavyElixir }   from './stroje/elixiry/KrvavyElixir.js';
 import { ElixirBohu }     from './stroje/elixiry/ElixirBohu.js';
 
-import { RESEARCHES } from './research/index.js';
+import { RESEARCHES, getResearchCost } from './research/index.js';
+
 // === OFFLINE OBNOVA VÝPRAVY (bez importu z vypravy.js) ===
 
 
@@ -226,6 +227,11 @@ window.RESEARCH_IMAGES = {
   VZariciFragmenty:   'src/ui/obrazky/vyzkumy/VZariciFragmenty.png',
   VSyntezaSlitiny:    'src/ui/obrazky/vyzkumy/VSyntezaSlitiny.png',
 };
+// zpřístupníme UI funkci na výpočet ceny dalšího levelu
+window.__getResearchCost = (cfg, lvl) => {
+  try { return getResearchCost(cfg, lvl); }
+  catch(e){ return null; }
+};
 
 function mountApp(){
   console.log('✅ init');
@@ -344,22 +350,19 @@ syncAccountFromSession();
   handleRoute();
 
   onAuthChanged(() => {
-  // zapamatuj ID účtu i pro state.js (getSaveKey fallback)
-  window.__currentUserId = (getCurrentUser?.() || 'host');
-
-  // přepínám účet -> zastav starý timer výprav
-  if (typeof stopExpeditionTimer === 'function') stopExpeditionTimer();
-
-  // načti save aktuálního účtu
   load(buildings);
 
-  // po načtení vždy obnov běžící výpravu (timer + offline dopočet)
-  if (typeof resumeExpeditionOnLoad === 'function') resumeExpeditionOnLoad();
+  // po načtení savů VŽDY obnov běžící výpravu (timer + offline dopočet)
+  if (typeof resumeExpeditionOnLoad === 'function') {
+    resumeExpeditionOnLoad();
+  } else if (typeof resumeExpeditionOnLoadInline === 'function') {
+    resumeExpeditionOnLoadInline();
+  }
 
-  updateAccountBadge?.();
-  handleRoute?.();
+  updateAccountBadge();
+  const name = (location.hash || '#budovy').slice(1);
+  handleRoute(); // překresli aktuální záložku
 });
-
 
   // === Automatická regenerace vitality každé 2 s (+10) ===
   setInterval(() => {

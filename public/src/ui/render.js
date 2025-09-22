@@ -489,58 +489,90 @@ if (typeof window !== 'undefined'){
 
 // ── VÝZKUMY (mřížka + kliknutí) ───────────────────────────────────────────────
 export function renderVyzkumyLegacy(){
-
   const page = document.getElementById('page-vyzkumy');
   if (!page || !page.classList.contains('active')) return;
 
   const grid = page.querySelector('#research-grid');
   if (!grid) return;
 
-  grid.innerHTML = '';
+  // --- helpery jen pro tuto funkci ---
+  const S  = (n) => `${Math.max(0, Math.ceil(n||0))} s`;
+  const imgOf = (cfg) => (window.RESEARCH_IMAGES?.[cfg.id]) || `./src/ui/obrazky/vyzkumy/${cfg.id}.png`;
+  const nextDur = (cfg, lvl) => Math.ceil((cfg.baseTime || 10) * Math.pow((cfg.timeFactor || 1.45), lvl));
+  const costToStr = (obj) => {
+    if (!obj || typeof obj !== 'object') return '—';
+    return Object.entries(obj).map(([k,v]) => `${(Number(v)||0).toLocaleString('cs-CZ')} ${k}`).join(', ');
+  };
 
   const list =
     (Array.isArray(window.__RESEARCH_LIST__) && window.__RESEARCH_LIST__) ||
     (typeof RESEARCHES !== 'undefined' && Array.isArray(RESEARCHES) && RESEARCHES) ||
     [];
 
+  grid.innerHTML = '';
+
   list.forEach(cfg => {
-    const r  = (window.state?.research?.[cfg.id]) || { level: 0 };
-    const lv = r.level || 0;
+    const rState = (window.state?.research?.[cfg.id]) || {};
+    const lvl    = rState.level|0;
+    const busy   = (rState.action === 'upgrade') && (rState.remaining > 0);
+    const total  = nextDur(cfg, lvl);
+    const remain = busy ? (rState.remaining|0) : 0;
+    const pct    = busy ? Math.max(0, Math.min(100, Math.round(100 * (1 - (remain/total))))) : 0;
 
-    const tile = document.createElement('button');
-    const locked = !canStartResearchByReq(cfg, window.state);
-    tile.className = 'card research-card' + (locked ? ' locked' : '');
-    tile.setAttribute('data-rid', cfg.id);
+    const div = document.createElement('button');
+    div.className = 'research-card';
+    div.type = 'button';
+    div.style.padding = '0';
 
-    // obrázek + obsah (použijeme .tile-bg a .tile-content, aby šednutí fungovalo přes CSS)
-    const img = (window.RESEARCH_IMAGES && window.RESEARCH_IMAGES[cfg.id]) || null;
-    tile.innerHTML = `
-      ${img ? `<div class="tile-bg" style="background-image:url('${img}')"></div>` : ''}
-      <div class="tile-content">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div style="font-weight:800;font-size:16px;line-height:1.1;max-width:80%;">${cfg.name}</div>
-          <div class="level">Lvl ${lv}</div>
+    div.innerHTML = `
+      <div class="tile-bg" style="background-image:url('${imgOf(cfg)}');"></div>
+      <div class="tile-content" style="padding:12px;">
+        <div class="row" style="display:flex;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;">${cfg.name || cfg.id}</h3>
+          <span class="level">Lvl: ${lvl}</span>
         </div>
-        <div class="mini muted" style="margin-top:6px;">${cfg.desc || ''}</div>
+
+        ${busy ? `
+          <div class="progress" style="margin-top:8px;">
+            <div class="bar" style="width:${pct}%"></div>
+          </div>
+          <div class="mini muted" style="margin-top:4px; text-align:right;">
+            Zkoumání — zbývá ${S(remain)}
+          </div>
+        ` : `
+          <div class="mini muted" style="margin-top:8px;">Připraveno k výzkumu</div>
+        `}
       </div>
     `;
 
-    grid.appendChild(tile);
+    div.addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.__selectedResearchId = cfg.id;
+      if (typeof window.renderResearchDetail === 'function'){
+        window.renderResearchDetail(cfg.id);
+      }
+      // zvýraznění vybrané
+      [...grid.children].forEach(c => c.classList.remove('selected'));
+      div.classList.add('selected');
+    });
+
+    grid.appendChild(div);
   });
 
-  if (!grid.dataset.bound){
-    grid.addEventListener('click', (e)=>{
-      const tile = e.target.closest('.research-card[data-rid]');
-      if (!tile) return;
-      const rid = tile.getAttribute('data-rid');
-      window.__selectedResearchId = rid;
-      if (typeof window.renderResearchDetail === 'function'){
-        window.renderResearchDetail(rid);
-      }
-    });
-    grid.dataset.bound = '1';
+  // auto select + detail na první položku
+  if (list.length){
+    const want = window.__selectedResearchId || list[0].id;
+    window.__selectedResearchId = want;
+    if (typeof window.renderResearchDetail === 'function'){
+      window.renderResearchDetail(want);
+    }
+    // označ vybranou kartu
+    const idx = list.findIndex(x=>x.id===want);
+    const el  = grid.children[idx];
+    if (el) el.classList.add('selected');
   }
 }
+
 
 // ── MŘÍŽKA BUDOV ──────────────────────────────────────────────────────────────
 function ensureBudovyLayout(){
@@ -626,3 +658,59 @@ export function renderBuildings(buildingsMaybe){
     if (sel) renderDetail(sel);
   }
 }
+// Globální vykreslení detailu výzkumu (volá se z mřížky vlevo)
+window.renderResearchDetail = function renderResearchDetail(rid){
+  const page  = document.getElementById('page-vyzkumy');
+  const box   = page?.querySelector('#research-detail-box');
+  if (!box) return;
+
+  const list =
+    (Array.isArray(window.__RESEARCH_LIST__) && window.__RESEARCH_LIST__) ||
+    (typeof RESEARCHES !== 'undefined' && Array.isArray(RESEARCHES) && RESEARCHES) ||
+    [];
+  const cfg = list.find(x => x.id === rid);
+  if (!cfg){
+    box.innerHTML = `<div class="muted">Výzkum nebyl nalezen.</div>`;
+    return;
+  }
+
+  const R  = (window.state?.research?.[cfg.id]) || {};
+  const lvl    = R.level|0;
+  const busy   = (R.action === 'upgrade') && (R.remaining > 0);
+  const baseT  = cfg.baseTime || 10;
+  const factor = cfg.timeFactor || 1.45;
+  const total  = Math.ceil(baseT * Math.pow(factor, lvl));
+  const remain = busy ? (R.remaining|0) : 0;
+  const pct    = busy ? Math.max(0, Math.min(100, Math.round(100 * (1 - (remain/total))))) : 0;
+
+  // cena upgradu: preferuj funkci z main.js (napojení na research/index.js)
+  const nextCostObj =
+    (typeof window.__getResearchCost === 'function') ? window.__getResearchCost(cfg, lvl) : null;
+
+  const costToStr = (obj) => {
+    if (!obj || typeof obj !== 'object') return '—';
+    return Object.entries(obj).map(([k,v]) => `${(Number(v)||0).toLocaleString('cs-CZ')} ${k}`).join(', ');
+  };
+  const S = (n) => `${Math.max(0, Math.ceil(n||0))} s`;
+  const img = (window.RESEARCH_IMAGES?.[cfg.id]) || `./src/ui/obrazky/vyzkumy/${cfg.id}.png`;
+
+  box.innerHTML = `
+    <div class="detail-img square" style="background-image:url('${img}');"></div>
+
+    <h3 style="margin-top:8px;">${cfg.name || cfg.id}</h3>
+    <div class="mini">Úroveň: ${lvl}${busy ? ` • právě probíhá zkoumání (${S(remain)})` : ''}</div>
+
+    ${busy ? `
+      <div class="progress" style="margin-top:8px;">
+        <div class="bar" style="width:${pct}%"></div>
+      </div>
+      <div class="mini muted" style="margin-top:4px; text-align:right;">
+        Zbývá ${S(remain)} z ${S(total)}
+      </div>
+    ` : ''}
+
+    <h4 style="margin-top:12px;">Akce</h4>
+    <div class="mini">Doba dalšího levelu: ${S(total)}</div>
+    <div class="mini">Cena upgradu: <b>${costToStr(nextCostObj)}</b></div>
+  `;
+};

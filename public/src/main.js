@@ -344,19 +344,22 @@ syncAccountFromSession();
   handleRoute();
 
   onAuthChanged(() => {
+  // zapamatuj ID účtu i pro state.js (getSaveKey fallback)
+  window.__currentUserId = (getCurrentUser?.() || 'host');
+
+  // přepínám účet -> zastav starý timer výprav
+  if (typeof stopExpeditionTimer === 'function') stopExpeditionTimer();
+
+  // načti save aktuálního účtu
   load(buildings);
 
-  // po načtení savů VŽDY obnov běžící výpravu (timer + offline dopočet)
-  if (typeof resumeExpeditionOnLoad === 'function') {
-    resumeExpeditionOnLoad();
-  } else if (typeof resumeExpeditionOnLoadInline === 'function') {
-    resumeExpeditionOnLoadInline();
-  }
+  // po načtení vždy obnov běžící výpravu (timer + offline dopočet)
+  if (typeof resumeExpeditionOnLoad === 'function') resumeExpeditionOnLoad();
 
-  updateAccountBadge();
-  const name = (location.hash || '#budovy').slice(1);
-  handleRoute(); // překresli aktuální záložku
+  updateAccountBadge?.();
+  handleRoute?.();
 });
+
 
   // === Automatická regenerace vitality každé 2 s (+10) ===
   setInterval(() => {

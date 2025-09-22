@@ -2,6 +2,11 @@
 import { START_RESOURCES } from './data/sklad.js';
 import { buildingMultiplier, applyAllEffects, getResearchCost } from './research/index.js';
 import { getCurrentUser } from './auth.js';
+// Klíč savu dle účtu (host = výchozí)
+export function getSaveKey(){
+  const uid = (getCurrentUser?.() || window.__currentUserId || 'host').toString().trim() || 'host';
+  return `idle_save:${uid}`;
+}
 
 
 
@@ -459,6 +464,8 @@ function _saveKey(){
 }
 
 export function save(){
+    const storageKey = getSaveKey();
+
     // pokud běží hard reset, na jeden (resp. do reloadu) žádný save
   if (typeof window !== 'undefined' && window.__SKIP_SAVE_ONCE) return;
 

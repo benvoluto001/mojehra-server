@@ -1539,3 +1539,39 @@ border-radius: 10px;
   gap: 16px;
   grid-template-columns: repeat(3, 1fr); /* vždy 3 sloupce */
 }
+/* velký „hero“ obrázek v detailu (budovy/výzkumy) */
+.detail-hero{
+  width: 100%;
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin: 6px 0 10px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.detail-hero{
+  width: 100%;
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin: 6px 0 10px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+/* velký obrázek v detailu (společné) */
+.detail-hero{
+  width: 100%;
+  height: 160px;                 /* výzkumy necháme obdélník */
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin: 6px 0 10px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* jen u budov bude obrázek přesný čtverec */
+.detail-hero.hero-square{
+  height: auto;                  /* potlačí fixní výšku */
+  aspect-ratio: 1 / 1;           /* čtverec */
+  background-repeat: no-repeat;
+}

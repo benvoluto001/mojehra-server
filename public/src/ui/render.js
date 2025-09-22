@@ -8,6 +8,19 @@ const s      = (n) => `${Math.max(0, Math.ceil(Number(n) || 0))}s`;
 // ── stav / importy ─────────────────────────────────────────────────────────────
 import { state, save } from '../state.js';
 import { getBuildingRate } from '../state.js';
+// --- helpery jen pro výzkumy (nepřepisují nic existujícího) ---
+const formatSec = (n)=> `${Math.max(0, Math.ceil(Number(n)||0))}s`;
+const H = 3600;
+function getResearchTimeAt(r, level){
+  if (typeof r.getResearchTime === 'function') return Math.ceil(Number(r.getResearchTime(level) || 0));
+  return Math.ceil(Number(r.researchTime || 0));
+}
+function fmtCostObj(obj){
+  if (!obj) return '';
+  return Object.entries(obj).map(([k,v]) => `${k} ${Number(v).toLocaleString('cs-CZ')}`).join(', ');
+}
+
+
 
 // === Pomocníci pro výpočet produkce/časů z budovy ===
 const HOUR = 3600;
@@ -249,13 +262,25 @@ const rows = Array.from({length:10}, (_,i) => {
   const reqHTML = renderReqHTML(b, state);
 
   const lvlShown = b.isBuilt ? b.level : 0;
+const imgKey = b.imageKey || b.id || '';
+const busyText = (b.isBusy?.())
+  ? ' • právě probíhá ' + (b.action === 'build' ? 'stavba' : 'vylepšení') + ' (' + s(b.remaining) + ')'
+  : '';
 
+  
   // MARKUP ve stejném duchu jako výzkumy:
   // Nadpis → Úroveň → Požadavky → Akce (cena, doba, tlačítko) → Aktuální produkce → Projekce → Statistika
   box.innerHTML = `
-    <h3>${b.name}</h3>
-    <div class="mini">Úroveň: ${lvlShown}${b.isBusy?.() ? ` • právě probíhá ${b.action === 'build' ? 'stavba' : 'vylepšení'} (${s(b.remaining)})` : ''}</div>
+        <h3>${b.name}</h3>
+    <div class="detail-hero hero-square" style="background-image:
+      linear-gradient(to bottom right, rgba(25,25,30,.25), rgba(25,25,30,.3)),
+      url('./src/ui/obrazky/${imgKey}.png')
+    "></div>
 
+    <div class="mini">Úroveň: ${lvlShown}${busyText}</div>
+
+
+    
     ${reqHTML}
 
     <h4>Akce</h4>
@@ -283,7 +308,8 @@ const rows = Array.from({length:10}, (_,i) => {
     </button>
     ${b.isBusy?.()
       ? `<div class="progress" style="margin-top:8px;">
-           <div class="bar" style="width:${Math.round(100 * (1 - (b.remaining/(b.action==='build'?b.buildTime:b.upgradeTime))))}%"></div>
+           <div class="bar" style="width:${Math.round(100 * (1 - (b.remaining/(b.action==='build' ? b.buildTime : getUpgradeTimeAt(b, b.level))))) }%
+"></div>
          </div>`
       : ''
     }
@@ -388,39 +414,78 @@ export function renderStats(buildings){
     ${rows || `<div class="muted">Žádná aktivní produkce</div>`}
   `;
 }
-// splněné požadavky výzkumu? (budovy + jiné výzkumy)
-function canStartResearchByReq(cfg, st = window.state){
-  if (!cfg) return true;
-  const s = st || {};
-  // různé možné názvy polí s požadavky
-  const bReq =
-    cfg.buildingReq ||
-    (cfg.requires && cfg.requires.buildings) ||
-    cfg.requiresBuildings ||
-    null;
-  const rReq =
-    cfg.researchReq ||
-    (cfg.requires && cfg.requires.research) ||
-    cfg.requiresResearch ||
-    null;
 
-  // budovy: bereme živé instance z window.__allBuildings
-  if (bReq){
-    const bmap = Object.fromEntries((window.__allBuildings || []).map(b => [b.id, b]));
-    for (const [id, need] of Object.entries(bReq)){
-      const cur = bmap[id]?.level || 0;
-      if (cur < Number(need)) return false;
-    }
+
+
+
+// ── DETAIL VÝZKUMU (pravý panel) ─────────────────────────────────────────────
+export function renderResearchDetail(rOrId){
+  const panel = document.getElementById('research-detail-box');
+  if (!panel) return;
+
+  // r může být objekt nebo jen id
+  const r = (typeof rOrId === 'string')
+    ? (window.__allResearches || []).find(x => x.id === rOrId)
+    : rOrId;
+
+  if (!r){
+    panel.innerHTML = `<div class="muted">Vyber výzkum vlevo.</div>`;
+    return;
   }
-  // výzkumy: z uloženého stavu
-  if (rReq){
-    for (const [id, need] of Object.entries(rReq)){
-      const cur = s?.research?.[id]?.level || 0;
-      if (cur < Number(need)) return false;
-    }
-  }
-  return true;
+
+  const total  = getResearchTimeAt(r, r.level);
+  const busy   = r.isBusy?.();
+  const remain = busy ? (r.remaining|0) : 0;
+  const pct    = busy ? Math.max(0, Math.min(100, Math.round(100 * (1 - (remain/total))))) : 0;
+
+  const cost = fmtCostObj(
+    (typeof r.getNextCost === 'function') ? r.getNextCost()
+      : (r.researchCost || r.cost || null)
+  ) || '—';
+
+  const imgKey  = r.imageKey || r.id || '';
+  const reqHTML = renderReqHTML(r, state);
+
+  panel.innerHTML = `
+    <h3>${r.name}</h3>
+    <div class="detail-hero" style="background-image:
+      linear-gradient(to bottom right, rgba(25,25,30,.25), rgba(25,25,30,.3)),
+      url('./src/ui/obrazky/${imgKey}.png')
+    "></div>
+
+    <div class="mini">Úroveň: ${r.level|0}${busy ? ` • právě probíhá (${s(remain)})` : ''}</div>
+
+    <h4>Akce</h4>
+    <div class="mini">Doba výzkumu: ${s(total)}</div>
+    <div class="mini">Cena dalšího levelu: ${cost}</div>
+
+    ${busy ? `
+      <div class="progress" style="margin:8px 0;">
+        <div class="bar" style="width:${pct}%"></div>
+      </div>
+      <div class="mini muted" style="margin:-2px 0 8px; text-align:right;">
+        Zkoumání — zbývá ${s(remain)}
+      </div>
+    ` : ''}
+
+    <button id="btn-research" class="btn">${busy ? 'Zkoumá se…' : 'Zkoumat'}</button>
+
+    ${reqHTML ? `<h4 style="margin-top:14px;">Požadavky</h4>${reqHTML}` : ''}
+  `;
+
+  panel.querySelector('#btn-research')?.addEventListener('click', ()=>{
+    if (busy) return;
+    r.startResearch?.();
+    save?.();
+    renderResearchDetail(r);
+  });
 }
+
+// pro starší kód, který volá window.renderResearchDetail(rid)
+if (typeof window !== 'undefined'){
+  window.renderResearchDetail = (rid) => renderResearchDetail(rid);
+}
+
 
 // ── VÝZKUMY (mřížka + kliknutí) ───────────────────────────────────────────────
 export function renderVyzkumyLegacy(){

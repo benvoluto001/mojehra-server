@@ -137,7 +137,6 @@ function startResearchUIUpdater(){
     const grid = page.querySelector('#research-grid');
     if (grid){
       [...grid.children].forEach(card=>{
-       
         const rid = card.dataset.rid;
         const cfg = (window.__RESEARCH_LIST__||[]).find(x=>x.id===rid);
         const R   = state.research?.[rid] || {};
@@ -234,7 +233,9 @@ if (btn){
     <button id="btn-research" class="btn"${busy || !canStartResearch(cfg) ? ' disabled' : ''}>
     ${busy ? 'Zkoumá se…' : 'Zkoumat'}
   </button>
-  const btn = box.querySelector('#btn-research');
+`;
+
+const btn = box.querySelector('#btn-research');
 btn?.addEventListener('click', () => {
   if (btn.disabled) return;        // nic pokud je zamčeno
   startResearch(cfg);              // odečti cenu + spusť akci
@@ -242,6 +243,6 @@ btn?.addEventListener('click', () => {
   renderResearchDetail(cfg.id);    // obnov detail (ukáže progress)
 });
 
-
-    `;
 }
+
+

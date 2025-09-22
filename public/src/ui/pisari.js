@@ -23,7 +23,7 @@ function pay(cost = {}){
 }
 
 // ───────────────────────── Konfigurace a utilitky ────────────────────────────
-const DURATION_S = 3;                                // 1 zkoumání = 3 s
+const DURATION_S = 450;                                // 1 zkoumání = 3 s
 const rnd = (n) => Math.floor(Math.random() * n);
 const s   = (n) => `${Math.max(0, Math.ceil(n||0))}s`;
 

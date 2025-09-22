@@ -343,16 +343,20 @@ syncAccountFromSession();
   if (!location.hash) location.hash = '#budovy';
   handleRoute();
 
-  // reakce na přepnutí účtu (registrace/přihlášení/odhlášení)
   onAuthChanged(() => {
-    load(buildings);
-    // po načtení savů obnov běžící výpravu (spustí časovač a dopočítá offline)
-resumeExpeditionOnLoad();
+  load(buildings);
 
-    updateAccountBadge();
-    const name = (location.hash || '#budovy').slice(1);
-    handleRoute(); // překresli aktuální záložku
-  });
+  // po načtení savů VŽDY obnov běžící výpravu (timer + offline dopočet)
+  if (typeof resumeExpeditionOnLoad === 'function') {
+    resumeExpeditionOnLoad();
+  } else if (typeof resumeExpeditionOnLoadInline === 'function') {
+    resumeExpeditionOnLoadInline();
+  }
+
+  updateAccountBadge();
+  const name = (location.hash || '#budovy').slice(1);
+  handleRoute(); // překresli aktuální záložku
+});
 
   // === Automatická regenerace vitality každé 2 s (+10) ===
   setInterval(() => {
@@ -366,14 +370,7 @@ resumeExpeditionOnLoad();
     }
   }, 2000);
 
-  onAuthChanged(() => {
-  load(window.__allBuildings || []);
-  const name = (location.hash || '#budovy').slice(1);
-  // (pokud máš odznak účtu v menu, klidně aktualizuj i ten)
-  // updateAccountBadge?.();
-  // překresli aktuální záložku:
-  location.hash = '#' + name;
-});
+ 
 
 }
 

@@ -131,7 +131,21 @@ export const state = {
     max:   { health: 100, mana: 100, vitality: 100 },
     regen: { interval: 10, health: 10, mana: 10, vitality: 15 }, // každých 10 s
     inventory: [...EMPTY_INV],
-    equipment: { ...EMPTY_EQUIP }
+    equipment: { ...EMPTY_EQUIP },
+
+      // --- výprava (default) ---
+    // --- výprava (default) ---
+  expedition: {
+    status: 'idle',   // 'idle' | 'running' | 'done'
+    phase: 'out',     // 'out'  | 'explore' | 'back'
+    remaining: 0,     // s do konce fáze
+    startedAt: 0,     // ms
+    updatedAt: 0,     // ms
+    biom: 'poust',
+    log: []
+  },
+
+
   },
 
   // VÝZKUMY
@@ -460,7 +474,7 @@ export function save(){
       effects:    state.effects,      // ⬅ nově ukládáme kumulované bonusy písařů
       effectsBuff: state.effectsBuff, // ⬅ případné dočasné buffy (elixíry)
       pisari:     state.pisari,       // ⬅ stav rozběhlého zkoumání + log
-      expedition: state.expedition || { status:'idle', log:[] },
+      expedition: JSON.parse(JSON.stringify(state.expedition || { status:'idle', log:[] })),
 
     },
     buildings: serializeBuildings(buildings), // ⬅ uložit budovy (id, level, akce, remaining…)
@@ -510,6 +524,7 @@ const raw = localStorage.getItem(_saveKey());
     if (data.state.effectsBuff) state.effectsBuff = data.state.effectsBuff;
     if (data.state.pisari)      state.pisari      = data.state.pisari;
     state.expedition = data.state.expedition || state.expedition || { status:'idle', log:[] };
+
 
 
     const ensureResearchKey = (key) => {

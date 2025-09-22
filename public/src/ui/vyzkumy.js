@@ -1,221 +1,239 @@
 // src/ui/vyzkumy.js
-import { state, canPay, pay, save, getResearchDuration, startResearch } from '../state.js';
-import { RESEARCHES, getResearchCost } from '../research/index.js';
+import { state } from '../state.js';
 
-// 1) Lokální fallback obrázků (primárně bereme window.RESEARCH_IMAGES z main.js)
-const RESEARCH_IMAGES_FALLBACK = {
-  VDrevo:               'src/ui/obrazky/vyzkumy/VDrevo.png',
-  VKamen:               'src/ui/obrazky/vyzkumy/VKamen.png',
-  VArtefakty:           'src/ui/obrazky/vyzkumy/VArtefakty.png',
-  VZariciFragmenty:     'src/ui/obrazky/vyzkumy/VZariciFragmenty.png',
-  VPokrocileNastroje:   'src/ui/obrazky/vyzkumy/VPokrocileNastroje.png',
-  VKrystalografie:      'src/ui/obrazky/vyzkumy/VKrystalografie.png',
-  VOkoPoutnika:         'src/ui/obrazky/vyzkumy/VOkoPoutnika.png', // ⬅ DOPLNĚNO
-};
-const RESEARCH_IMG_DEFAULT = 'src/ui/obrazky/vyzkumy/_default.png';
+const S = (n)=> `${Math.max(0, Math.ceil(Number(n)||0))}s`;
 
-const s   = (n) => `${Math.max(0, Math.ceil(Number(n)||0))}s`;
-const fmt = (n) => Number(n ?? 0).toLocaleString('cs-CZ');
-
-// --- Pomocné ---
-function getStateEntry(id){
-  const r = state.research?.[id];
-  return r || { level: 0, action: null, remaining: 0, baseTime: 10, timeFactor: 1.45 };
+function getImg(cfg){
+  return (window.RESEARCH_IMAGES?.[cfg.id]) || `./src/ui/obrazky/vyzkumy/${cfg.id}.png`;
 }
-function isRunning(r){ return r?.action === 'upgrade' && (r?.remaining || 0) > 0; }
-
-function shorten(text, max){
-  const t = String(text || '');
-  if (t.length <= max) return t;
-  return t.slice(0, Math.max(0, max - 1)).trimEnd() + '…';
+function getDuration(cfg, lvl){
+  if (typeof cfg.getResearchTime === 'function') return Math.ceil(Number(cfg.getResearchTime(lvl) || 0));
+  const base = cfg.baseTime || 10;
+  const fac  = cfg.timeFactor ?? 1.45;
+  return Math.ceil(base * Math.pow(fac, lvl));
 }
-
-// požadavky (pokud jsou uvedené na konfiguraci výzkumu)
-function meetsReqByCfg(cfg){
-  if (!cfg) return true;
-  // researchReq: { id: level }
-  if (cfg.researchReq){
-    for (const [rid, need] of Object.entries(cfg.researchReq)){
-      const cur = state.research?.[rid]?.level || 0;
-      if (cur < (need|0)) return false;
-    }
+function getCost(cfg, lvl){
+  if (typeof window.__getResearchCost === 'function'){
+    try{ return window.__getResearchCost(cfg, lvl); }catch(_){}
   }
-  // buildingReq: { id: level } – volitelně
-  if (cfg.buildingReq){
-    const bmap = Object.fromEntries((window.__allBuildings || []).map(b => [b.id, b]));
-    for (const [bid, need] of Object.entries(cfg.buildingReq)){
-      const cur = bmap[bid]?.level || 0;
-      const built = !!bmap[bid]?.isBuilt;
-      if (!built || cur < (need|0)) return false;
-    }
-  }
+  const base = cfg.cost || {};
+  const fac  = (cfg.costFactor ?? 1.4);
+  const out  = {};
+  for (const [k,v] of Object.entries(base)) out[k] = Math.ceil((Number(v)||0) * Math.pow(fac, lvl));
+  return out;
+}
+function costStr(obj){
+  if (!obj || typeof obj !== 'object') return '—';
+  return Object.entries(obj).map(([k,v]) => `${(Number(v)||0).toLocaleString('cs-CZ')} ${k}`).join(', ') || '—';
+}
+// --- požadavky/cena/start ---
+function reqsOf(cfg){
+  const b = cfg.buildingReq || cfg.requirements?.buildings || {};
+  const r = cfg.researchReq || cfg.requirements?.research  || {};
+  return { b, r };
+}
+function haveReqs({b,r}){
+  for (const [id,l] of Object.entries(b)) if ((state.buildings?.[id]?.level||0) < l) return false;
+  for (const [id,l] of Object.entries(r)) if ((state.research?.[id]?.level ||0) < l) return false;
   return true;
 }
-
-function imgFor(id){
-  // priorita: window.RESEARCH_IMAGES (main.js) → lokální fallback → default
-  const g = (window.RESEARCH_IMAGES && window.RESEARCH_IMAGES[id]) || null;
-  if (g) return g;
-  return RESEARCH_IMAGES_FALLBACK[id] || RESEARCH_IMG_DEFAULT;
+function hasResources(cost){
+  return Object.entries(cost||{}).every(([k,v]) => (state.resources?.[k]||0) >= (Number(v)||0));
+}
+function canStartResearch(cfg){
+  const R = state.research?.[cfg.id] || {};
+  if ((R.action === 'upgrade') && (R.remaining > 0)) return false;
+  const lvl  = R.level|0;
+  const cost = getCost(cfg, lvl);
+  return haveReqs(reqsOf(cfg)) && hasResources(cost);
+}
+function startResearch(cfg){
+  const R   = state.research?.[cfg.id] || (state.research[cfg.id] = { level:0 });
+  const lvl = R.level|0;
+  const cost= getCost(cfg, lvl);
+  // zaplať
+  for (const [k,v] of Object.entries(cost||{})){
+    state.resources[k] = Math.max(0, (Number(state.resources[k]||0) - Number(v||0)));
+  }
+  // spusť
+  R.action    = 'upgrade';
+  R.remaining = getDuration(cfg, lvl);
 }
 
-// === DETAIL PANEL ===
-export function renderResearchDetail(id){
-  const box = document.getElementById('research-detail');
-  if (!box) return;
 
-  const cfg = RESEARCHES.find(x => x.id === id) || null;
-  if (!cfg){
-    box.innerHTML = `<h3>Detail</h3><div class="muted">Výzkum nenalezen.</div>`;
-    return;
-  }
-  const r   = getStateEntry(id);
-  const lv  = r.level || 0;
-  const run = isRunning(r);
-
-  const costNext = getResearchCost(cfg, lv);
-  const canAff   = canPay(costNext);
-  const reqOK    = meetsReqByCfg(cfg);
-  const locked   = !run && (!canAff || !reqOK);
-
-  const rows = Object.entries(costNext).map(([k,v]) => {
-    const have = Number(state.resources?.[k]||0);
-    const need = Number(v)||0;
-    const ok = have >= need;
-    return `<li>${ok ? '✅' : '❌'} ${k} — ${ok ? 'splněno' : 'chybí ' + fmt(need - have)}</li>`;
-  }).join('');
-
-  const img = imgFor(cfg.id);
-
- box.innerHTML = `
-  <h3>${cfg.name}</h3>
-
-    <!-- Obrázek nahoře – ČTVEREC, ostrý -->
-  <img
-    src="${img}"
-    alt="${cfg.name}"
-    class="research-detail-img"
-    style="
-      display:block;
-      width:100%;
-      aspect-ratio:1/1;
-      object-fit:cover;
-      border-radius:12px;
-      margin:8px 0 10px;
-      image-rendering:auto;
-    "
-  />
-
-
-
-  <div class="mini">Úroveň: ${lv}${run ? ` • probíhá výzkum (${s(r.remaining)})` : ''}</div>
-
-  <div class="muted" style="margin:8px 0;">${cfg.desc || ''}</div>
-
-  <div class="mini muted">Cena další úrovně:</div>
-  <ul style="margin:4px 0 0 16px; padding-left:18px;">${rows || '<li>—</li>'}</ul>
-
-  <div class="mini muted" style="margin-top:8px;">Doba výzkumu:</div>
-  <div>${s(getResearchDuration(r))}</div>
-
-  <button id="btn-research" class="btn" ${locked ? 'disabled' : ''} style="margin-top:10px;">
-    ${run ? 'Probíhá…' : 'Zkoumat'}
-  </button>
-`;
-
-
-  // akce
-  const btn = box.querySelector('#btn-research');
-  if (btn){
-    btn.onclick = () => {
-      if (run) return;
-      const ok = startResearch(cfg.id);
-      if (!ok) return;
-      save?.();
-      renderVyzkumy();
-      renderResearchDetail(cfg.id);
-    };
-  }
-  // ulož pro loop (živé odpočítávání)
-  window.__selectedResearchId = id;
-  window.renderResearchDetail = renderResearchDetail;
-}
-
-// === HLAVNÍ MŘÍŽKA ===
 export function renderVyzkumy(){
   const page = document.getElementById('page-vyzkumy');
   if (!page) return;
+  const grid = page.querySelector('#research-grid');
+  const box  = page.querySelector('#research-detail-box');
+  if (!grid || !box) return;
 
-  // lazynastavení rozložení (mřížka + prázdný detail)
-  if (!document.getElementById('research-grid')){
-    page.innerHTML = `
-      <div id="research-grid"></div>
-      <section class="card" id="research-detail">
-        <h3>Detail</h3>
-        <div class="muted">Klikni vlevo na výzkum.</div>
-      </section>
-    `;
-  }
-
-  const grid = document.getElementById('research-grid');
+  const list = (window.__RESEARCH_LIST__) || window.RESEARCHES || [];
   grid.innerHTML = '';
 
-  const selectedId = window.__selectedResearchId || null;
+  list.forEach(cfg => {
+    const R   = state.research?.[cfg.id] || {};
+    const lvl = R.level|0;
+const busy   = (R.action === 'upgrade') && (R.remaining > 0);
+const total  = getDuration(cfg, lvl);
+const remain = busy ? (R.remaining|0) : 0;
+const pct    = busy ? Math.max(0, Math.min(100, Math.round(100*(1 - remain/total)))) : 0;
+const can    = canStartResearch(cfg);
+const locked = !can && !busy;
 
-  RESEARCHES.forEach(cfg => {
-    const r  = getStateEntry(cfg.id);
-    const lv = r.level || 0;
-    const run = isRunning(r);
-    const dur = getResearchDuration(r);
+const card = document.createElement('button');
+card.type = 'button';
+card.className = 'card research-card' + (locked ? ' locked' : '');
 
-    const costObj   = getResearchCost(cfg, lv);
-    const canAfford = canPay(costObj);
-    const reqOK     = meetsReqByCfg(cfg);
-    const locked    = !run && (!canAfford || !reqOK);
-
-    const imgUrl = imgFor(cfg.id);
-    const desc   = shorten(cfg.desc || '', 100);
-
-    const tile = document.createElement('button');
-    tile.className = 'card research-card';
-    tile.setAttribute('data-rid', cfg.id);
-    if (locked) tile.classList.add('locked');
-    if (cfg.id === selectedId) tile.classList.add('selected');
-
-    tile.innerHTML = `
-      <div class="tile-bg" style="background-image:url('${imgUrl}')"></div>
-      <div class="tile-content">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div>
-            <div style="font-weight:800; font-size:16px; margin-bottom:4px;">${cfg.name}</div>
-            <div class="muted" style="font-size:13px;">${desc}</div>
-          </div>
-          <div class="level">Lvl ${lv}</div>
+   
+  
+    card.dataset.rid = cfg.id;
+    card.innerHTML = `
+      <div class="tile-bg" style="background-image:
+        linear-gradient(to bottom right, rgba(25,25,30,.55), rgba(25,25,30,.55)),
+        url('${getImg(cfg)}')"></div>
+      <div class="tile-content" style="padding:12px;">
+        <div class="row" style="display:flex;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;">${cfg.name || cfg.id}</h3>
+          <span class="level">Lvl: ${lvl}</span>
         </div>
-        <div class="mini muted" style="margin-top:8px;">další lvl: ${s(dur)}</div>
-      </div>
-    `;
 
-    grid.appendChild(tile);
+      ${busy ? `
+  <div class="progress" data-role="bar"><div class="bar" style="width:${pct}%"></div></div>
+  <div class="mini muted" data-role="time" style="margin-top:4px;text-align:right;">Zkoumání — zbývá ${S(remain)}</div>
+` : `<div class="mini muted" style="margin-top:8px;">${locked ? 'Nelze zkoumat' : 'Připraveno k výzkumu'}</div>`}
+ 
+        </div>
+    `;
+    card.addEventListener('click', ()=>{
+      window.__selectedResearchId = cfg.id;
+      renderResearchDetail(cfg.id);
+      [...grid.children].forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+    grid.appendChild(card);
   });
 
-  // delegovaný click → otevřít detail
-  if (!grid.dataset.bound){
-    grid.addEventListener('click', (e) => {
-      const tile = e.target.closest('.research-card[data-rid]');
-      if (!tile) return;
-      const rid = tile.getAttribute('data-rid');
-      window.__selectedResearchId = rid;
-
-      // vizuální zvýraznění vybrané karty
-      grid.querySelectorAll('.research-card.selected').forEach(n => n.classList.remove('selected'));
-      tile.classList.add('selected');
-
-      renderResearchDetail(rid);
-    });
-    grid.dataset.bound = '1';
+  // auto select + vykresli detail
+  const want = window.__selectedResearchId || ( (window.__RESEARCH_LIST__||[])[0]?.id );
+  if (want){
+    window.__selectedResearchId = want;
+    renderResearchDetail(want);
+    const idx = (window.__RESEARCH_LIST__||[]).findIndex(x=>x.id===want);
+    if (grid.children[idx]) grid.children[idx].classList.add('selected');
   }
 
-  // pokud už je vybráno, obnov detail (kvůli odpočtu)
-  if (selectedId) renderResearchDetail(selectedId);
+  // živý updater (1×/s)
+  startResearchUIUpdater();
+}
+
+function startResearchUIUpdater(){
+  if (window.__researchUiTimer) clearInterval(window.__researchUiTimer);
+  window.__researchUiTimer = setInterval(()=>{
+    const page = document.getElementById('page-vyzkumy');
+    if (!page || !page.classList.contains('active')) return;
+
+    // aktualizace kartiček vlevo
+    const grid = page.querySelector('#research-grid');
+    if (grid){
+      [...grid.children].forEach(card=>{
+        startResearchUIUpdater()
+        const rid = card.dataset.rid;
+        const cfg = (window.__RESEARCH_LIST__||[]).find(x=>x.id===rid);
+        const R   = state.research?.[rid] || {};
+        const lvl = R.level|0;
+        const busy   = (R.action === 'upgrade') && (R.remaining > 0);
+        const total  = getDuration(cfg, lvl);
+        const remain = busy ? (R.remaining|0) : 0;
+        const pct    = busy ? Math.max(0, Math.min(100, Math.round(100*(1 - remain/total)))) : 0;
+
+        const bar = card.querySelector('.progress .bar');
+        const tEl = card.querySelector('[data-role="time"]');
+        const lEl = card.querySelector('.level');
+        if (lEl) lEl.textContent = `Lvl: ${lvl}`;
+        if (bar) bar.style.width = pct + '%';
+        if (tEl) tEl.textContent = `Zkoumání — zbývá ${S(remain)}`;
+      });
+    }
+
+    // aktualizace detailu vpravo
+    if (window.__selectedResearchId){
+      renderResearchDetail(window.__selectedResearchId, true); // lean = pouze živé části
+    }
+  }, 1000);
+}
+
+export function renderResearchDetail(rid, lean=false){
+  const page = document.getElementById('page-vyzkumy');
+  const box  = page?.querySelector('#research-detail-box');
+  if (!box) return;
+
+  const list = (window.__RESEARCH_LIST__) || window.RESEARCHES || [];
+  const cfg  = list.find(x=>x.id === rid);
+  if (!cfg){
+    box.innerHTML = `<div class="muted">Výzkum nenalezen.</div>`;
+    return;
+  }
+
+  const R      = state.research?.[cfg.id] || {};
+  const lvl    = R.level|0;
+  const busy   = (R.action === 'upgrade') && (R.remaining > 0);
+  const total  = getDuration(cfg, lvl);
+  const remain = busy ? (R.remaining|0) : 0;
+  const pct    = busy ? Math.max(0, Math.min(100, Math.round(100*(1 - remain/total)))) : 0;
+  const cost   = getCost(cfg, lvl);
+  const img    = getImg(cfg);
+
+  // lean update (bez překreslení celé šablony)
+  if (lean && box.dataset.rid === rid){
+    const bar = box.querySelector('.progress .bar');
+    const t1  = box.querySelector('[data-role="time1"]');
+    const t2  = box.querySelector('[data-role="time2"]');
+    const lvlEl = box.querySelector('[data-role="lvl"]');
+    const costEl= box.querySelector('[data-role="cost"]');
+
+    if (bar)    bar.style.width = pct + '%';
+    if (t1)     t1.textContent = busy ? `Zbývá ${S(remain)} z ${S(total)}` : '';
+    if (t2)     t2.textContent = S(total);
+    if (lvlEl)  lvlEl.textContent = `Úroveň: ${lvl}${busy ? ` • právě probíhá zkoumání (${S(remain)})` : ''}`;
+    if (costEl) costEl.innerHTML  = `<b>${costStr(cost)}</b>`;
+    const btn = box.querySelector('#btn-research');
+if (btn){
+  const can = canStartResearch(cfg);
+  btn.disabled = busy || !can;
+  btn.textContent = busy ? 'Zkoumá se…' : 'Zkoumat';
+}
+
+    return;
+  }
+
+  // plné vykreslení
+  box.dataset.rid = rid;
+  box.innerHTML = `
+  
+
+    <div class="detail-img square" style="background-image:
+      linear-gradient(to bottom right, rgba(25,25,30,.25), rgba(25,25,30,.3)),
+      url('${img}')"></div>
+
+    <h3 style="margin-top:8px;">${cfg.name || cfg.id}</h3>
+    <div class="mini" data-role="lvl">Úroveň: ${lvl}${busy ? ` • právě probíhá zkoumání (${S(remain)})` : ''}</div>
+
+    ${busy ? `
+      <div class="progress" style="margin-top:8px;">
+        <div class="bar" style="width:${pct}%"></div>
+      </div>
+      <div class="mini muted" style="margin-top:4px; text-align:right;" data-role="time1">
+        Zbývá ${S(remain)} z ${S(total)}
+      </div>
+    ` : ''}
+
+    <h4 style="margin-top:12px;">Akce</h4>
+    <div class="mini">Doba dalšího levelu: <span data-role="time2">${S(total)}</span></div>
+    <div class="mini">Cena upgradu: <span data-role="cost"><b>${costStr(cost)}</b></span></div>
+    <button id="btn-research" class="btn"${busy || !canStartResearch(cfg) ? ' disabled' : ''}>
+    ${busy ? 'Zkoumá se…' : 'Zkoumat'}
+  </button>
+
+    `;
 }

@@ -1584,3 +1584,20 @@ border-radius: 10px;
   border-radius: 12px;
   margin-bottom: 8px;
 }
+/* Výzkumy – čtvercový obrázek v detailu (pravý panel) */
+#page-vyzkumy #research-detail .detail-img.square{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+/* Výzkumy – karta nelze zkoumat (chybí požadavky/zdroje) */
+.card.research-card.locked{
+  filter: grayscale(1);
+  opacity: .6;
+}
+.card.research-card.locked:hover{
+  transform: none;
+}

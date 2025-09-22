@@ -244,6 +244,7 @@ function tick(){
   const elapsed = Math.floor((now - (ex.startedAt || now)) / 1000);
   ex.remaining = Math.max(0, planned - elapsed);
   ex.updatedAt = now;
+  
   // každých ~5 s ulož stav, ať se při přepnutí účtu nic neztratí
 if (!ex.__lastSave || (now - ex.__lastSave) > 5000){
   save?.();

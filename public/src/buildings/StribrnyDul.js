@@ -1,90 +1,56 @@
+
+
 // src/buildings/StribrnyDul.js
 import { BaseBuilding } from './BaseBuilding.js';
 import { state } from '../state.js';
 
-// Pomocná funkce: vezme level výzkumu bez ohledu na klíč
-function getPokrocileNastrojeLevel() {
-  const r = state?.research || {};
-  return (
-    r?.VPokrocileNastroje?.level ??
-    r?.pokrocileNastroje?.level ??
-    r?.PokrocileNastroje?.level ??
-    0
-  );
-}
-
-/**
- * Stříbrný důl – odemyká se, když:
- *  - výzkum „Pokročilé nástroje“ >= 1
- *  - Kamenolom >= 4
- *  - Železný důl >= 4
- */
 export class StribrnyDul extends BaseBuilding {
   constructor(){
-    const BASE_PROD_PER_HOUR = 5;     // příklad
-    const BASE_UPG_TIME_SEC  = 120;   // 2 min
-
-    const prodPerHour = (lvl) => {
-      const L = Math.max(1, Number(lvl) || 1);
-      if (L === 1) return BASE_PROD_PER_HOUR;
-      let rate = BASE_PROD_PER_HOUR;
-      for (let i = 2; i <= L; i++){
-        if (i <= 5) rate *= 1.18;   // 1–5: +18 % / lvl
-        else        rate *= 1.10;   // 6+:  +10 % / lvl
-      }
-      return rate;
-    };
-
-    const upgradeTime = () => BASE_UPG_TIME_SEC;
-
     super({
-      id: 'stribrnydul',
+      id: 'stribrnyDul',
       name: 'Stříbrný důl',
-      output: 'stříbro',
+      output: 'stříbro', 
 
-      baseRate: BASE_PROD_PER_HOUR,
+      // baseRate = produkce ZA HODINU na Lvl 1 (100 %)
+      // L1 = 125 / hod (před výzkumy)
+      baseRate: 0.41,
+
+      // výchozí level
       level: 1,
+
+      // růst podle levelu: p_n = 18 + 102 * φ^{-(n-2)}, L1 = 100 %, L2 = +120 %
+      growthType: 'phi',
+
+      // stavba / upgrade
       isBuilt: false,
+      buildTime: 2,
+      buildCost: { dřevo: 60, kámen: 120, železo: 45, },
 
-      buildTime: 10,
-      buildCost: { dřevo: 120, kámen: 220, železo: 80 },
+      // náklady upgradu
+      upgradeCostBase: { dřevo: 120, kámen: 360, železo: 135 },   // základ
+      upgradeCostLinearInc: 10,         // každý další level +10 dřeva
+      upgradeCostFactor: 1.5,          // multiplikativní faktor
 
-      upgradeTime: BASE_UPG_TIME_SEC,
-      upgradeCostBase: { dřevo: 150, kámen: 300, železo: 120 },
-      upgradeCostLinearInc: 15,
-      upgradeCostFactor: 1.35,
+      // tick (sekundy) – hra přičítá 1×/s
+      timeIncrement: 1.7,
+       
+    
 
-      // Info pro UI (nebývá rozhodující, finální kontrola je v canStartBuild)
-      requirements: { kamenolom: 4, zeleznydul: 4 },
-      researchRequirements: { VPokrocileNastroje: 1 },
-
-      getRatePerHour: prodPerHour,
-      getUpgradeTime: upgradeTime,
-      timeIncrement: 1,
+      requirements: {
+        zeleznydul: 3, kamenolom: 8, },
+     
+      researchReq: { VPokrocileNastroje: 5 },
     });
-
-    this._prodPerHour = (lvl)=> (lvl ? prodPerHour(lvl) : prodPerHour(this.level));
-    this._upgradeTime = (lvl)=> (lvl ? upgradeTime(lvl) : upgradeTime(this.level));
   }
+canStartBuild(buildings = []){
+  const lvl = state.research?.VPokrocileNastroje?.level || 0;
+  if (lvl < 5) return false; // vyžaduje výzkum Pokročilé nástroje lvl 4
+  return super.canStartBuild(buildings);
+}
 
-  // Finální odemykací logika – používá se při renderu i při kliknutí
-  canStartBuild(buildings = {}){
-    const researchLvl = getPokrocileNastrojeLevel();
-
-    const kamLvl =
-      buildings?.kamenolom?.level ??
-      state?.buildings?.kamenolom?.level ?? 0;
-
-    const zelLvl =
-      buildings?.zeleznydul?.level ??
-      state?.buildings?.zeleznydul?.level ?? 0;
-
-    if (researchLvl < 1) return false;
-    if (kamLvl < 4 || zelLvl < 4) return false;
-
-    return super.canStartBuild?.(buildings) ?? true;
+  // čas upgradu: 2^level sekund (Lvl1→2 s, Lvl2→4 s, Lvl3→8 s…)
+  getUpgradeTime(level = this.level){
+    const L = Math.max(1, Number(level) || 1);
+    return Math.pow(2, L);
   }
-
-  ratePerHour(level = this.level){ return this._prodPerHour(level); }
-  upgradeTime(level = this.level){ return this._upgradeTime(level); }
 }

@@ -182,6 +182,8 @@ export function renderResearchDetail(rid, lean=false){
   const pct    = busy ? Math.max(0, Math.min(100, Math.round(100*(1 - remain/total)))) : 0;
   const cost   = getCost(cfg, lvl);
   const img    = getImg(cfg);
+  const desc   = (cfg.desc ?? cfg.description ?? cfg.popis ?? cfg.text ?? '').toString();
+
 
   // lean update (bez překreslení celé šablony)
   if (lean && box.dataset.rid === rid){
@@ -216,7 +218,10 @@ if (btn){
       url('${img}')"></div>
 
     <h3 style="margin-top:8px;">${cfg.name || cfg.id}</h3>
+        <h3 style="margin-top:8px;">${cfg.name || cfg.id}</h3>
+    ${desc ? `<div class="desc">${desc}</div>` : ''}
     <div class="mini" data-role="lvl">Úroveň: ${lvl}${busy ? ` • právě probíhá zkoumání (${S(remain)})` : ''}</div>
+
 
     ${busy ? `
       <div class="progress" style="margin-top:8px;">
@@ -227,7 +232,7 @@ if (btn){
       </div>
     ` : ''}
 
-    <h4 style="margin-top:12px;">Akce</h4>
+    
     <div class="mini">Doba dalšího levelu: <span data-role="time2">${S(total)}</span></div>
     <div class="mini">Cena upgradu: <span data-role="cost"><b>${costStr(cost)}</b></span></div>
     <button id="btn-research" class="btn"${busy || !canStartResearch(cfg) ? ' disabled' : ''}>

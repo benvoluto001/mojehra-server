@@ -1601,3 +1601,9 @@ border-radius: 10px;
 .card.research-card.locked:hover{
   transform: none;
 }
+/* Výzkumy – popisek v detailu */
+#page-vyzkumy #research-detail .desc{
+  margin: 6px 0 10px;
+  line-height: 1.35;
+  color: rgba(255,255,255,.86);
+}
